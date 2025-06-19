@@ -25,27 +25,38 @@ from Sysadmin import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    #System-admin URLS
     path('api/system-admin/dashboard/', SystemAdminDashboard.as_view(), name='system-admin-dashboard'),
     path('api/reports/generate/', GenerateReportView.as_view(), name='generate-report'),
     path('api/reports/download/<int:report_id>/', DownloadReportView.as_view(), name='download-report'),
     path('api/reports/list/', ReportListView.as_view(), name='list-reports'),
+
+    #HEALTH FACILITY URLS
     path('health-facilities/', HealthFacilityListCreateView.as_view(), name='health-facility-list'),
     path('health-facilities/<int:pk>/', HealthFacilityDetailView.as_view(), name='health-facility-detail'),
     path('health-facilities/create-with-admin/', CreateFacilityWithAdminView.as_view(), name='create-facility-admin'),
     path('vaccines/', VaccineListCreateView.as_view(), name='vaccine-list'),
     path('vaccines/<int:pk>/', VaccineDetailView.as_view(), name='vaccine-detail'),
+    path('', views.base, name='base'),
     path('', views.dashboard, name='dashboard'),
     path('facilities/', views.facilities, name='facilities'),
     path('facilities/create/', views.create_facility, name='create_facility'),
-    #path('facilities/<int:pk>/edit/', views.edit_facility, name='edit_facility'),
-    #path('facilities/<int:pk>/delete/', views.delete_facility, name='delete_facility'),
     path('vaccines/create/', views.create_vaccine, name='create_vaccine'),  # Add this line
     path('vaccines/', views.vaccines, name='vaccines'),
     path('facilities/create-admin/', create_facility_admin, name='create_facility_admin'),
-    path('sysadmin/login/', auth_views.LoginView.as_view(), name='login'),
-    path('/sysadmin/logout/', auth_views.LogoutView.as_view(), name= 'logout'),
     path('facility-admins/<int:admin_id>/', facility_admin_detail, name='facility_admin_detail'),
-    
+
+
+    #Auth URLS
+    path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name= 'logout'),
 ]
+
+
+
+#path('facilities/<int:pk>/edit/', views.edit_facility, name='edit_facility'),
+    #path('facilities/<int:pk>/delete/', views.delete_facility, name='delete_facility'),
+
+
 
 

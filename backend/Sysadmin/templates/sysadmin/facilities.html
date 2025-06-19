@@ -4,6 +4,8 @@
     <a href="{% url 'sysadmin:facility_admin_detail' facility.admin.id %}">
         {{ facility.admin.username }}
     </a>
+    <a href="{% url 'login' %}">Login</a>
+
 </td>
 
 {% block title %}Manage Facilities{% endblock %}

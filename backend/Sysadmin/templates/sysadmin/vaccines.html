@@ -9,6 +9,8 @@
         <a href="{% url 'sysadmin:vaccines' %}" class="btn btn-back">
             <i class="fas fa-arrow-left"></i> Back to Vaccines
         </a>
+        <a href="{% url 'login' %}">Login</a>
+
     </div>
 
     <div class="vaccine-card">
@@ -21,17 +23,6 @@
                     <span class="detail-label">Vaccine Name:</span>
                     <span class="detail-value">{{ vaccine.name }}</span>
                 </div>
-                
-                <div class="detail-item">
-                    <span class="detail-label">Batch Number:</span>
-                    <span class="detail-value">{{ vaccine.batch_number }}</span>
-                </div>
-                
-                <div class="detail-item">
-                    <span class="detail-label">Manufacturer:</span>
-                    <span class="detail-value">{{ vaccine.manufacturer }}</span>
-                </div>
-                
                 <div class="detail-item">
                     <span class="detail-label">Created By:</span>
                     <span class="detail-value">{{ created_by }}</span>
@@ -53,25 +44,6 @@
                     <span class="detail-label">Dosage:</span>
                     <span class="detail-value">{{ vaccine.dosage }}</span>
                 </div>
-                
-                <div class="detail-item">
-                    <span class="detail-label">Quantity Available:</span>
-                    <span class="detail-value">{{ vaccine.quantity }}</span>
-                </div>
-                
-                <div class="detail-item">
-                    <span class="detail-label">Storage Requirements:</span>
-                    <span class="detail-value">{{ vaccine.storage_requirements }}</span>
-                </div>
-                
-                <div class="detail-item">
-                    <span class="detail-label">Expiration Date:</span>
-                    <span class="detail-value {% if days_until_expiry <= 30 %}text-danger{% endif %}">
-                        {{ vaccine.expiration_date|date:"M d, Y" }}
-                        ({{ days_until_expiry }} days remaining)
-                    </span>
-                </div>
-            </div>
             
             {% if vaccine.description %}
             <div class="detail-item full-width">
@@ -111,8 +83,7 @@
             {% endif %}
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
+        <!-- Action Buttons <div class="action-buttons">
             <a href="{% url 'sysadmin:edit_vaccine' vaccine.id %}" class="btn btn-edit">
                 <i class="fas fa-edit"></i> Edit Vaccine
             </a>
@@ -125,7 +96,7 @@
             <a href="{% url 'sysadmin:transfer_vaccine' vaccine.id %}" class="btn btn-transfer">
                 <i class="fas fa-exchange-alt"></i> Transfer Stock
             </a>
-        </div>
+        </div>-->
     </div>
 </div>
 {% endblock %}
