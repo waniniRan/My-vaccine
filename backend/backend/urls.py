@@ -15,13 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path,include
 from django.contrib.auth import views as auth_views
 from Sysadmin.views import SystemAdminDashboard,GenerateReportView, DownloadReportView,ReportListView
 from Sysadmin.views import HealthFacilityListCreateView,HealthFacilityDetailView,CreateFacilityWithAdminView,VaccineListCreateView,VaccineDetailView
 from Sysadmin.views import create_facility_admin, facility_admin_detail
 from Sysadmin import views
 
+app_name='sysadmin'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,8 +38,7 @@ urlpatterns = [
     path('health-facilities/create-with-admin/', CreateFacilityWithAdminView.as_view(), name='create-facility-admin'),
     path('vaccines/', VaccineListCreateView.as_view(), name='vaccine-list'),
     path('vaccines/<int:pk>/', VaccineDetailView.as_view(), name='vaccine-detail'),
-    path('', views.base, name='base'),
-    path('', views.dashboard, name='dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('facilities/', views.facilities, name='facilities'),
     path('facilities/create/', views.create_facility, name='create_facility'),
     path('vaccines/create/', views.create_vaccine, name='create_vaccine'),  # Add this line
@@ -48,7 +48,8 @@ urlpatterns = [
 
 
     #Auth URLS
-    path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('sysadmin/', include('Sysadmin.urls', namespace= 'sysadmin')),
+    path('login/', auth_views.LoginView.as_view(template_name='sysadmin/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name= 'logout'),
 ]
 
