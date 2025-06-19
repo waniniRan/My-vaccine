@@ -1,9 +1,10 @@
 {% extends "sysadmin/base.html" %}
-{% load static %}
 
 {% block title %}Create Facility{% endblock %}
+{% load static %}
 
 {% block content %}
+<a href="{% url 'login' %}">Login</a>
 <div class="form-container">
     <h1>Create New Health Facility</h1>
     

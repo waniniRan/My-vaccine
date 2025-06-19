@@ -7,8 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}System Admin{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/admin.css' %}">
-    <a href="{% url 'login' %}">Login</a>
-
+   
 </head>
 <body>
     <div class="admin-container">
@@ -16,12 +15,13 @@
             <h2>System Admin</h2>
             <nav>
                 <ul>
+                   
                     <li><a href="{% url 'sysadmin:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
                     <li><a href="{% url 'sysadmin:create_facility' %}" class="{% if request.resolver_match.url_name == 'create_facility' %}active{% endif %}">Create Health Facility</a></li>
                     <li><a href="{% url 'sysadmin:create_facility_admin' %}" class="{% if request.resolver_match.url_name == 'create_facility_admin' %}active{% endif %}">Create Facility Admin</a></li> 
                     <li><a href="{% url 'sysadmin:create_vaccine' %}" class="{% if request.resolver_match.url_name == 'create_vaccine' %}active{% endif %}">Create Vaccines</a></li>
                     <li><a href="{% url 'sysadmin:facilities' %}" class="{% if request.resolver_match.url_name == 'facilities' %}active{% endif %}">Health Facilities</a></li>
-                    <li><a href="{% url 'sysadmin:facility_admin_detail' %}" class="{% if request.resolver_match.url_name == 'facility_admin_detail' %}active{% endif %}">Facilities Admin</a></li> 
+
                     <li><a href="{% url 'sysadmin:vaccines' %}" class="{% if request.resolver_match.url_name == 'vaccines' %}active{% endif %}">Vaccines</a></li>
                     
                     <li><a href="{% url 'logout' %}">Logout</a></li>

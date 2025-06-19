@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from .models import HealthFacility,Vaccine
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from .models import HealthFacility
+from .models import HealthFacility, Vaccine
 
 
 class healthfacilityform(forms.ModelForm):

@@ -19,7 +19,7 @@ from api.serializers import (HealthFacilitySerializer, VaccineSerializer,Facilit
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
-from .forms import FacilityAdminCreationForm, Vaccinationform
+from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
 
 
 
@@ -264,6 +264,7 @@ def create_vaccine(request):
         form = Vaccinationform()
     
     return render(request, 'sysadmin/create_vaccine.html', {'form': form})
+
 @login_required
 @staff_member_required
 def vaccines(request):
@@ -287,9 +288,8 @@ def facility_admin_detail(request, admin_id):
     }
     return render(request, 'sysadmin/facility_admin_detail.html', context)
 
-
-
-
+@login_required
+@staff_member_required
 def create_facility_admin(request):
     if request.method == 'POST':
         form = FacilityAdminCreationForm(request.POST)
@@ -317,3 +317,7 @@ def create_facility_admin(request):
         form = FacilityAdminCreationForm()
     
     return render(request, 'sysadmin/create_facility_admin.html', {'form': form}) 
+
+
+def home(request):
+    return render(request, 'sysadmin/home.html')
