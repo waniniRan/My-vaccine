@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import User
 from django.contrib.auth.decorators import login_required
@@ -19,7 +19,9 @@ from api.serializers import (HealthFacilitySerializer, VaccineSerializer,Facilit
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
-from .forms import FacilityAdminCreationForm
+from .forms import FacilityAdminCreationForm, Vaccinationform
+
+
 
 
 #SYSTEM ADMIN
@@ -242,11 +244,51 @@ def create_facility(request):
     
     return render(request, 'sysadmin/create_facility.html', {'form': form})
 
+
+@login_required
+@staff_member_required
+def create_vaccine(request):
+    if request.method == 'POST':
+        form = Vaccinationform(request.POST)
+        if form.is_valid():
+            vaccine = form.save(commit=False)
+            vaccine.created_by = request.user
+            vaccine.save()
+            
+            # Handle ManyToMany field for facilities
+            form.save_m2m()
+            
+            messages.success(request, f'Successfully created vaccine: {vaccine.name}')
+            return redirect('sysadmin:vaccines')
+    else:
+        form = Vaccinationform()
+    
+    return render(request, 'sysadmin/create_vaccine.html', {'form': form})
 @login_required
 @staff_member_required
 def vaccines(request):
     vaccines = Vaccine.objects.all()
     return render(request, 'sysadmin/vaccines.html', {'vaccines': vaccines})
+
+@login_required
+@staff_member_required
+def facility_admin_detail(request, admin_id):
+    admin = get_object_or_404(
+        User.objects.select_related('managed_facility'),
+        id=admin_id,
+        role='FACILITY_ADMIN'
+    )
+    facility = admin.managed_facility
+    
+    context = {
+        'admin': admin,
+        'facility': facility,
+        'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M') if admin.last_login else 'Never'
+    }
+    return render(request, 'sysadmin/facility_admin_detail.html', context)
+
+
+
 
 def create_facility_admin(request):
     if request.method == 'POST':
@@ -265,7 +307,6 @@ def create_facility_admin(request):
             facility = HealthFacility.objects.create(
                 name=form.cleaned_data['facility_name'],
                 facility_type=form.cleaned_data['facility_type'],
-                address=form.cleaned_data.get('address', ''),
                 admin=admin_user,
                  created_by=request.user
             )
@@ -275,4 +316,4 @@ def create_facility_admin(request):
     else:
         form = FacilityAdminCreationForm()
     
-    return render(request, 'sysadmin/create_facility_admin.html', {'form': form})
+    return render(request, 'sysadmin/create_facility_admin.html', {'form': form}) 

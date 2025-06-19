@@ -1,0 +1,131 @@
+{% extends "sysadmin/base.html" %}
+
+{% block title %}Add New Vaccine{% endblock %}
+
+{% block content %}
+<div class="vaccine-form-container">
+    <div class="form-header">
+        <h1>Add New Vaccine</h1>
+        <a href="{% url 'sysadmin:vaccines' %}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Vaccines
+        </a>
+    </div>
+
+    <form method="post" class="vaccine-form">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h2><i class="fas fa-syringe"></i> Vaccine Information</h2>
+            
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">
+                    <i class="fas fa-tag"></i> Vaccine Name*
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <div class="error-message">{{ form.name.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.batch_number.id_for_label }}">
+                        <i class="fas fa-barcode"></i> Batch Number*
+                    </label>
+                    {{ form.batch_number }}
+                    {% if form.batch_number.errors %}
+                    <div class="error-message">{{ form.batch_number.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.manufacturer.id_for_label }}">
+                        <i class="fas fa-industry"></i> Manufacturer*
+                    </label>
+                    {{ form.manufacturer }}
+                    {% if form.manufacturer.errors %}
+                    <div class="error-message">{{ form.manufacturer.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">
+                    <i class="fas fa-info-circle"></i> Description
+                </label>
+                {{ form.description }}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2><i class="fas fa-flask"></i> Medical Details</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.dosage.id_for_label }}">
+                        <i class="fas fa-prescription-bottle-alt"></i> Dosage*
+                    </label>
+                    {{ form.dosage }}
+                    {% if form.dosage.errors %}
+                    <div class="error-message">{{ form.dosage.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.quantity.id_for_label }}">
+                        <i class="fas fa-cubes"></i> Quantity*
+                    </label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}
+                    <div class="error-message">{{ form.quantity.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.expiration_date.id_for_label }}">
+                        <i class="fas fa-calendar-times"></i> Expiration Date*
+                    </label>
+                    {{ form.expiration_date }}
+                    {% if form.expiration_date.errors %}
+                    <div class="error-message">{{ form.expiration_date.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.storage_requirements.id_for_label }}">
+                        <i class="fas fa-temperature-low"></i> Storage*
+                    </label>
+                    {{ form.storage_requirements }}
+                    {% if form.storage_requirements.errors %}
+                    <div class="error-message">{{ form.storage_requirements.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2><i class="fas fa-clinic-medical"></i> Facility Assignment</h2>
+            <div class="form-group">
+                <label for="{{ form.facilities.id_for_label }}">
+                    <i class="fas fa-hospital"></i> Available At Facilities*
+                </label>
+                {{ form.facilities }}
+                {% if form.facilities.errors %}
+                <div class="error-message">{{ form.facilities.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-submit">
+                <i class="fas fa-save"></i> Save Vaccine
+            </button>
+            <button type="reset" class="btn btn-reset">
+                <i class="fas fa-undo"></i> Reset Form
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -19,7 +19,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from Sysadmin.views import SystemAdminDashboard,GenerateReportView, DownloadReportView,ReportListView
 from Sysadmin.views import HealthFacilityListCreateView,HealthFacilityDetailView,CreateFacilityWithAdminView,VaccineListCreateView,VaccineDetailView
-from Sysadmin.views import create_facility_admin
+from Sysadmin.views import create_facility_admin, facility_admin_detail
 from Sysadmin import views
 
 
@@ -39,10 +39,13 @@ urlpatterns = [
     path('facilities/create/', views.create_facility, name='create_facility'),
     #path('facilities/<int:pk>/edit/', views.edit_facility, name='edit_facility'),
     #path('facilities/<int:pk>/delete/', views.delete_facility, name='delete_facility'),
+    path('vaccines/create/', views.create_vaccine, name='create_vaccine'),  # Add this line
     path('vaccines/', views.vaccines, name='vaccines'),
     path('facilities/create-admin/', create_facility_admin, name='create_facility_admin'),
-    path('login/', auth_views.LoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name= 'logout'),
-
-
+    path('sysadmin/login/', auth_views.LoginView.as_view(), name='login'),
+    path('/sysadmin/logout/', auth_views.LogoutView.as_view(), name= 'logout'),
+    path('facility-admins/<int:admin_id>/', facility_admin_detail, name='facility_admin_detail'),
+    
 ]
+
+

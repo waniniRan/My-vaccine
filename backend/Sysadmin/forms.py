@@ -69,4 +69,4 @@ class FacilityAdminCreationForm(forms.Form):
             self.add_error('confirm_password', "Passwords don't match")
         
         return cleaned_data
-    
+
