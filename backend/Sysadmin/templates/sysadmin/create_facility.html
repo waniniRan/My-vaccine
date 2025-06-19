@@ -1,0 +1,47 @@
+{% extends "sysadmin/base.html" %}
+
+{% block title %}Create Facility{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Create New Health Facility</h1>
+    
+    <form method="post" class="admin-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_name">Facility Name:</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_facility_type">Facility Type:</label>
+            {{ form.facility_type }}
+            {{ form.facility_type.errors }}
+        </div>
+        
+        <h3>Facility Admin Account</h3>
+        
+        <div class="form-group">
+            <label for="id_admin_username">Username:</label>
+            {{ form.admin_username }}
+            {{ form.admin_username.errors }}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_admin_email">Email:</label>
+            {{ form.admin_email }}
+            {{ form.admin_email.errors }}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_admin_password">Password:</label>
+            {{ form.admin_password }}
+            {{ form.admin_password.errors }}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Create Facility</button>
+    </form>
+</div>
+{% endblock %}

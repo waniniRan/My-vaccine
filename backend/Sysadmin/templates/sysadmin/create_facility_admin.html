@@ -1,0 +1,74 @@
+{% extends "sysadmin/base.html" %}
+
+{% block title %}Create Facility Admin{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="form-title">Create New Facility Admin</h1>
+    
+    <form method="post" class="admin-form">
+        {% csrf_token %}
+        
+        <fieldset>
+            <legend>Facility Information</legend>
+            
+            <div class="form-group">
+                <label for="{{ form.facility_name.id_for_label }}">Facility Name:</label>
+                {{ form.facility_name }}
+                {% if form.facility_name.errors %}
+                <div class="error-message">{{ form.facility_name.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.facility_type.id_for_label }}">Facility Type:</label>
+                {{ form.facility_type }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.address.id_for_label }}">Address:</label>
+                {{ form.address }}
+            </div>
+        </fieldset>
+        
+        <fieldset>
+            <legend>Admin Account</legend>
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username:</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <div class="error-message">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email:</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <div class="error-message">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">Password:</label>
+                {{ form.password }}
+                <small class="form-text">{{ form.password.help_text }}</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.confirm_password.id_for_label }}">Confirm Password:</label>
+                {{ form.confirm_password }}
+                {% if form.confirm_password.errors %}
+                <div class="error-message">{{ form.confirm_password.errors }}</div>
+                {% endif %}
+            </div>
+        </fieldset>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Facility & Admin</button>
+            <a href="{% url 'sysadmin:facilities' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
