@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
-    'Sysadmin',
     'rest_framework',
     'corsheaders',
     'Sysadmin',
@@ -78,7 +77,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR/ 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,6 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'Sysadmin.User'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -148,3 +148,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_REDIRECT_URL = '/base/'
+LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'

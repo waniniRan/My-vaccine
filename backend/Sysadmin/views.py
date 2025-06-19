@@ -19,7 +19,7 @@ from api.serializers import (HealthFacilitySerializer, VaccineSerializer,Facilit
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
-from .forms import FacilityCreationForm
+from .forms import FacilityAdminCreationForm
 
 
 #SYSTEM ADMIN
@@ -230,7 +230,7 @@ def facilities(request):
 @staff_member_required
 def create_facility(request):
     if request.method == 'POST':
-        form = FacilityCreationForm(request.POST)
+        form = FacilityAdminCreationForm(request.POST)
         if form.is_valid():
             # Process form data
             facility = form.save(commit=False)
@@ -238,7 +238,7 @@ def create_facility(request):
             facility.save()
             return redirect('sysadmin:facilities')
     else:
-        form = FacilityCreationForm()
+        form = FacilityAdminCreationForm()
     
     return render(request, 'sysadmin/create_facility.html', {'form': form})
 
@@ -250,7 +250,7 @@ def vaccines(request):
 
 def create_facility_admin(request):
     if request.method == 'POST':
-        form = FacilityCreationForm(request.POST)
+        form = FacilityAdminCreationForm(request.POST)
         if form.is_valid():
             # Create Facility Admin User
             admin_user = User.objects.create_user(
@@ -273,6 +273,6 @@ def create_facility_admin(request):
             messages.success(request, f'Successfully created {facility.name} with admin {admin_user.username}')
             return redirect('sysadmin:facilities')
     else:
-        form = FacilityCreationForm()
+        form = FacilityAdminCreationForm()
     
     return render(request, 'sysadmin/create_facility_admin.html', {'form': form})

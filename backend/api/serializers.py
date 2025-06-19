@@ -1,6 +1,6 @@
 # facilities/serializers.py
 from rest_framework import serializers
-from .models import HealthFacility, Vaccine
+from Sysadmin.models import HealthFacility, Vaccine
 from Sysadmin.models import User
 
 class HealthFacilitySerializer(serializers.ModelSerializer):

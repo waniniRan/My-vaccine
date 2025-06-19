@@ -17,7 +17,22 @@ class User(AbstractUser):
         default=Role.USER
     )
     must_change_password = models.BooleanField(default=True)
-    
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name='sysadmin_user_set',  # Add this
+        related_query_name='sysadmin_user',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name='sysadmin_user_set',  # Add this
+        related_query_name='sysadmin_user',
+    )
     def clean(self):
         """Ensure system admins have is_staff and is_superuser set correctly"""
         if self.role == self.Role.SYSTEM_ADMIN:
@@ -28,6 +43,8 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self.full_clean()  # Runs clean() method before saving
         super().save(*args, **kwargs)
+
+
 #END
 
 # REPORTS OF THE SYSTEM
@@ -110,9 +127,7 @@ class Vaccine(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
-    class Meta:
-        unique_together = ('name', 'facility')
-
+    
     def __str__(self):
         return f"{self.name} at {self.facility.name}"
 #END

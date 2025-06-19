@@ -15,7 +15,7 @@ class healthfacilityform(forms.ModelForm):
 class Vaccinationform(forms.ModelForm):
     class Meta:
         model = Vaccine
-        fields = ['name',  'diseasePrevented', 'dose', 'description', 'recommended age']
+        fields = ['name',  'diseasePrevented', 'dosage', 'description', 'recommended_age']
 
 #FACILITY ADMIN
 User = get_user_model()
