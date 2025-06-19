@@ -167,34 +167,33 @@ class HealthFacilityDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = HealthFacilitySerializer
 
 class CreateFacilityWithAdminView(generics.CreateAPIView):
-    permission_classes = [IsSystemAdmin]
-    serializer_class = FacilityAdminCreationSerializer
+   # permission_classes = [IsSystemAdmin]
+    #serializer_class = FacilityAdminCreationSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         # Create Facility Admin user
-        admin_user = User.objects.create_user(
-            username=serializer.validated_data['admin_username'],
-            email=serializer.validated_data['admin_email'],
-            password=serializer.validated_data['admin_password'],
-            role='FACILITY_ADMIN',
-            must_change_password=True
-        )
+        #admin_user = User.objects.create_user(
+        #    username=serializer.validated_data['admin_username'],
+         #   email=serializer.validated_data['admin_email'],
+          #  password=serializer.validated_data['admin_password'],
+           # role='FACILITY_ADMIN',
+            #must_change_password=True
+        #)
 
         # Create Health Facility
         facility = HealthFacility.objects.create(
             name=serializer.validated_data['facility_name'],
             facility_type=serializer.validated_data['facility_type'],
-            address=serializer.validated_data.get('address', ''),
             admin=admin_user,
             created_by=request.user
         )
 
         # Return facility data with admin info
-        facility_serializer = HealthFacilitySerializer(facility)
-        return Response(facility_serializer.data, status=status.HTTP_201_CREATED)
+        #facility_serializer = HealthFacilitySerializer(facility)
+        #return Response(facility_serializer.data, status=status.HTTP_201_CREATED)
 
 class VaccineListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsSystemAdmin]
@@ -232,7 +231,7 @@ def facilities(request):
 @staff_member_required
 def create_facility(request):
     if request.method == 'POST':
-        form = FacilityAdminCreationForm(request.POST)
+        form = healthfacilityform(request.POST)
         if form.is_valid():
             # Process form data
             facility = form.save(commit=False)
@@ -240,7 +239,7 @@ def create_facility(request):
             facility.save()
             return redirect('sysadmin:facilities')
     else:
-        form = FacilityAdminCreationForm()
+        form = healthfacilityform()
     
     return render(request, 'sysadmin/create_facility.html', {'form': form})
 

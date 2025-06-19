@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}System Admin{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    
    
 </head>
 <body>
@@ -23,7 +24,7 @@
                     <li><a href="{% url 'sysadmin:facilities' %}" class="{% if request.resolver_match.url_name == 'facilities' %}active{% endif %}">Health Facilities</a></li>
 
                     <li><a href="{% url 'sysadmin:vaccines' %}" class="{% if request.resolver_match.url_name == 'vaccines' %}active{% endif %}">Vaccines</a></li>
-                    
+                    <a href="{% url 'login' %}">Login</a>
                     <li><a href="{% url 'logout' %}">Logout</a></li>
                 </ul>
             </nav>
