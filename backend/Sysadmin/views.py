@@ -216,7 +216,7 @@ def dashboard(request):
         'facility_count': HealthFacility.objects.count(),
         'vaccine_count': Vaccine.objects.count(),
         'admin_count': User.objects.filter(role='FACILITY_ADMIN').count(),
-        'recent_logs': LogEntry.objects.all()[:10]  # Assuming you have a LogEntry model
+        #'recent_logs': LogEntry.objects.all()[:10]  # Assuming you have a LogEntry model
     }
     return render(request, 'sysadmin/dashboard.html', context)
 
