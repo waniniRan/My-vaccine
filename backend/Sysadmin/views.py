@@ -1,25 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import User
+from .models import User, SystemReport,HealthFacility,Vaccine
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status,generics,permissions
 from .permissions import IsSystemAdmin
-import csv,json
+from django.core.paginator import Paginator
+import csv
+from django.db import transaction
+from django.views.decorators.http import require_http_methods
 from datetime import timedelta
-from django.http import HttpResponse
+from django.http import JsonResponse, HttpResponse
 from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
-from .models import SystemReport,User,HealthFacility,Vaccine
 from io import StringIO, BytesIO
 from openpyxl import Workbook
-from api.serializers import (HealthFacilitySerializer, VaccineSerializer,FacilityAdminCreationSerializer)
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
+from api.serializers import (HealthFacilitySerializer, VaccineSerializer)
 from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -209,23 +211,62 @@ class VaccineDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = VaccineSerializer
 #END
 
+logger = logging.getLogger(__name__)
+
 #LOGIN VIEWS
 @login_required
 @staff_member_required
 def dashboard(request):
+ try:
     context = {
         'facility_count': HealthFacility.objects.count(),
-        'vaccine_count': Vaccine.objects.count(),
-        'admin_count': User.objects.filter(role='FACILITY_ADMIN').count(),
-        #'recent_logs': LogEntry.objects.all()[:10]  # Assuming you have a LogEntry model
+            'active_facility_count': HealthFacility.objects.filter(is_active=True).count(),
+            'vaccine_count': Vaccine.objects.count(),
+            'active_vaccine_count': Vaccine.objects.filter(is_active=True).count(),
+            'admin_count': User.objects.filter(role='FACILITY_ADMIN').count(),
+            'recent_facilities': HealthFacility.objects.order_by('-created_at')[:5],
+            'recent_vaccines': Vaccine.objects.order_by('-created_at')[:5],
     }
     return render(request, 'sysadmin/dashboard.html', context)
+ except Exception as e:
+        logger.error(f"Dashboard error: {str(e)}")
+        messages.error(request, "An error occurred while loading the dashboard.")
+        return render(request, 'sysadmin/dashboard.html', {})
 
 @login_required
 @staff_member_required
 def facilities(request):
-    facilities = HealthFacility.objects.all()
-    return render(request, 'sysadmin/facilities.html', {'facilities': facilities})
+    """Enhanced facilities list with search and pagination"""
+    facility_list = HealthFacility.objects.select_related('admin').order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        facility_list = facility_list.filter(
+            name__icontains=search_query
+        ) | facility_list.filter(
+            location__icontains=search_query
+        )
+    
+    # Filter by type
+    facility_type = request.GET.get('type', '')
+    if facility_type:
+        facility_list = facility_list.filter(facility_type=facility_type)
+    
+    # Pagination
+    paginator = Paginator(facility_list, 10)
+    page_number = request.GET.get('page')
+    facilities_page = paginator.get_page(page_number)
+    
+    context = {
+        'facilities': facilities_page,
+        'search_query': search_query,
+        'facility_type': facility_type,
+        'facility_types': HealthFacility.FACILITY_TYPES,
+        'total_count': facility_list.count()
+    }
+    return render(request, 'sysadmin/facilities.html', context)
+
 
 @login_required
 @staff_member_required
@@ -233,11 +274,20 @@ def create_facility(request):
     if request.method == 'POST':
         form = healthfacilityform(request.POST)
         if form.is_valid():
-            # Process form data
-            facility = form.save(commit=False)
-            facility.created_by = request.user
-            facility.save()
-            return redirect('sysadmin:facilities')
+           try:
+                  with transaction.atomic():
+                      facility = form.save(commit=False)
+                      facility.created_by = request.user
+                      facility.save()
+                    
+                      messages.success(request, f'Successfully created facility: {facility.name}')
+                    
+                      return redirect('sysadmin:facilities')
+           except Exception as e:
+                logger.error(f"Error creating facility: {str(e)}")
+                messages.error(request, "An error occurred while creating the facility.")
+        else:
+            messages.error(request, "Please correct the errors below.")
     else:
         form = healthfacilityform()
     
@@ -250,15 +300,23 @@ def create_vaccine(request):
     if request.method == 'POST':
         form = Vaccinationform(request.POST)
         if form.is_valid():
-            vaccine = form.save(commit=False)
-            vaccine.created_by = request.user
-            vaccine.save()
+            try:
+                 with transaction.atomic():
+                       vaccine = form.save(commit=False)
+                       vaccine.created_by = request.user
+                       vaccine.save()
             
-            # Handle ManyToMany field for facilities
-            form.save_m2m()
+                       # Handle ManyToMany field for facilities
+                       form.save_m2m()
             
-            messages.success(request, f'Successfully created vaccine: {vaccine.name}')
-            return redirect('sysadmin:vaccines')
+                       messages.success(request, f'Successfully created vaccine: {vaccine.name}')
+                       return redirect('sysadmin:vaccines')
+            except Exception as e:
+                logger.error(f"Error creating vaccine: {str(e)}")
+                messages.error(request, "An error occurred while creating the vaccine.")
+        else : 
+            messages.error(request, "Please correct the error below.")
+
     else:
         form = Vaccinationform()
     
@@ -267,8 +325,79 @@ def create_vaccine(request):
 @login_required
 @staff_member_required
 def vaccines(request):
-    vaccines = Vaccine.objects.all()
-    return render(request, 'sysadmin/vaccines.html', {'vaccines': vaccines})
+    vaccine_list = Vaccine.objects.prefetch_related('facility').order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        vaccine_list = vaccine_list.filter(
+            name__icontains=search_query
+        ) | vaccine_list.filter(
+            diseasePrevented__icontains=search_query
+        )
+    
+    # Filter by facility
+    facility_id = request.GET.get('facility', '')
+    if facility_id:
+        vaccine_list = vaccine_list.filter(facility__id=facility_id)
+    
+    # Pagination
+    paginator = Paginator(vaccine_list, 10)
+    page_number = request.GET.get('page')
+    vaccines_page = paginator.get_page(page_number)
+    
+    context = {
+        'vaccines': vaccines_page,
+        'search_query': search_query,
+        'facility_id': facility_id,
+        'facilities': HealthFacility.objects.filter(is_active=True),
+        'total_count': vaccine_list.count()
+    }
+    return render(request, 'sysadmin/vaccines.html', context)
+
+
+@login_required
+@staff_member_required
+def create_facility_admin(request):
+    if request.method == 'POST':
+        form = FacilityAdminCreationForm(request.POST)
+        if form.is_valid():
+            try:
+                 with transaction.atomic():
+                     
+                  # Create Facility Admin User
+                  admin_user = User.objects.create_user(
+                  username=form.cleaned_data['username'],
+                  email=form.cleaned_data['email'],
+                  password=form.cleaned_data['password'],
+                  role='FACILITY_ADMIN',
+                  must_change_password=True
+                        )
+            
+                  # Create Health Facility
+                 facility = HealthFacility.objects.create(
+                 name=form.cleaned_data['facility_name'],
+                 facility_type=form.cleaned_data['facility_type'],
+                 location= form.cleaned_data['facility_location'],
+                 phone= form.cleaned_data['facility_phone'],
+                 email= form.cleaned_data['facility_email'],
+                 admin=admin_user,
+                 created_by=request.user
+                   )
+            
+                 messages.success(request, f'Successfully created {facility.name} with admin {admin_user.username}')
+            
+                 return redirect('sysadmin:facilities')
+            except Exception as e:
+                logger.error(f"Error creating facility admin: {str(e)}")
+                messages.error(request, "An error occurred while creating the facility and admin.")
+        else:
+            messages.error(request, "Please correct the errors below.")          
+    else:
+        form = FacilityAdminCreationForm()
+    
+    return render(request, 'sysadmin/create_facility_admin.html', {'form': form}) 
+
 
 @login_required
 @staff_member_required
@@ -278,45 +407,65 @@ def facility_admin_detail(request, admin_id):
         id=admin_id,
         role='FACILITY_ADMIN'
     )
-    facility = admin.managed_facility
-    
-    context = {
+
+    try:
+          facility = admin.managed_facility
+    except:
+         facility=None
+
+         context = {
         'admin': admin,
         'facility': facility,
         'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M') if admin.last_login else 'Never'
-    }
+                  }
     return render(request, 'sysadmin/facility_admin_detail.html', context)
 
 @login_required
 @staff_member_required
-def create_facility_admin(request):
-    if request.method == 'POST':
-        form = FacilityAdminCreationForm(request.POST)
-        if form.is_valid():
-            # Create Facility Admin User
-            admin_user = User.objects.create_user(
-                username=form.cleaned_data['username'],
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['password'],
-                role='FACILITY_ADMIN',
-                must_change_password=True
-            )
-            
-            # Create Health Facility
-            facility = HealthFacility.objects.create(
-                name=form.cleaned_data['facility_name'],
-                facility_type=form.cleaned_data['facility_type'],
-                admin=admin_user,
-                 created_by=request.user
-            )
-            
-            messages.success(request, f'Successfully created {facility.name} with admin {admin_user.username}')
-            return redirect('sysadmin:facilities')
-    else:
-        form = FacilityAdminCreationForm()
-    
-    return render(request, 'sysadmin/create_facility_admin.html', {'form': form}) 
+@require_http_methods(["POST"])
+def toggle_facility_status(request, facility_id):
+    """Toggle facility active/inactive status via AJAX"""
+    try:
+        facility = get_object_or_404(HealthFacility, id=facility_id)
+        facility.is_active = not facility.is_active
+        facility.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_active': facility.is_active,
+            'message': f'Facility {"activated" if facility.is_active else "deactivated"} successfully'
+        })
+    except Exception as e:
+        logger.error(f"Error toggling facility status: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred while updating the facility status'
+        })
 
+@login_required
+@staff_member_required
+@require_http_methods(["POST"])
+def toggle_vaccine_status(request, vaccine_id):
+    """Toggle vaccine active/inactive status via AJAX"""
+    try:
+        vaccine = get_object_or_404(Vaccine, id=vaccine_id)
+        vaccine.is_active = not vaccine.is_active
+        vaccine.save()
+        
+        return JsonResponse({
+            'success': True,
+            'is_active': vaccine.is_active,
+            'message': f'Vaccine {"activated" if vaccine.is_active else "deactivated"} successfully'
+        })
+    except Exception as e:
+        logger.error(f"Error toggling vaccine status: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': 'An error occurred while updating the vaccine status'
+        })
 
 def home(request):
+    """Home page redirect"""
+    if request.user.is_authenticated:
+        return redirect('sysadmin:dashboard')
     return render(request, 'sysadmin/home.html')
