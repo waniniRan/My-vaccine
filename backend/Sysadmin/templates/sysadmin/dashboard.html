@@ -1,135 +1,46 @@
 {% extends "sysadmin/base.html" %}
-{% load static %}
 
-{% block title %}System Dashboard{% endblock %}
+{% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
-    <div class="dashboard-header">
-        <h1>System Administration Dashboard</h1>
-        <p class="dashboard-subtitle">Welcome, {{ user.get_full_name|default:user.username }}</p>
-    </div>
-
-    <!-- Statistics Cards -->
+<div class="dashboard">
+    <h1>System Admin Dashboard</h1>
+    
     <div class="stats-grid">
-        <div class="stat-card facilities-card">
-            <div class="stat-icon">
-                <i class="fas fa-hospital"></i>
-            </div>
-            <div class="stat-content">
-                <h3>Health Facilities</h3>
-                <div class="stat-numbers">
-                    <span class="primary-number">{{ facility_count }}</span>
-                    <span class="secondary-number">{{ active_facility_count }} active</span>
-                </div>
-                <a href="{% url 'sysadmin:facilities' %}" class="stat-link">View All</a>
-            </div>
+        <div class="stat-card">
+            <h3>Health Facilities</h3>
+            <p>{{ facility_count }}</p>
         </div>
-
-        <div class="stat-card vaccines-card">
-            <div class="stat-icon">
-                <i class="fas fa-syringe"></i>
-            </div>
-            <div class="stat-content">
-                <h3>Vaccines</h3>
-                <div class="stat-numbers">
-                    <span class="primary-number">{{ vaccine_count }}</span>
-                    <span class="secondary-number">{{ active_vaccine_count }} active</span>
-                </div>
-                <a href="{% url 'sysadmin:vaccines' %}" class="stat-link">View All</a>
-            </div>
+        <div class="stat-card">
+            <h3>Vaccines</h3>
+            <p>{{ vaccine_count }}</p>
         </div>
-
-        <div class="stat-card admins-card">
-            <div class="stat-icon">
-                <i class="fas fa-user-shield"></i>
-            </div>
-            <div class="stat-content">
-                <h3>Facility Admins</h3>
-                <div class="stat-numbers">
-                    <span class="primary-number">{{ admin_count }}</span>
-                    <span class="secondary-number">administrators</span>
-                </div>
-                <a href="{% url 'sysadmin:create_facility_admin' %}" class="stat-link">Create New</a>
-            </div>
+        <div class="stat-card">
+            <h3>Facility Admins</h3>
+            <p>{{ admin_count }}</p>
         </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h2>Quick Actions</h2>
-        <div class="action-grid">
-            <a href="{% url 'sysadmin:create_facility' %}" class="action-card">
-                <i class="fas fa-plus-circle"></i>
-                <span>Create Facility</span>
-            </a>
-            <a href="{% url 'sysadmin:create_vaccine' %}" class="action-card">
-                <i class="fas fa-plus-circle"></i>
-                <span>Add Vaccine</span>
-            </a>
-            <a href="{% url 'sysadmin:create_facility_admin' %}" class="action-card">
-                <i class="fas fa-user-plus"></i>
-                <span>Create Admin</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Recent Activity -->
+    
     <div class="recent-activity">
-        <div class="activity-section">
-            <h2>Recent Facilities</h2>
-            {% if recent_facilities %}
-                <div class="activity-list">
-                    {% for facility in recent_facilities %}
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-hospital text-blue"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h4>{{ facility.name }}</h4>
-                                <p>{{ facility.get_facility_type_display }} • {{ facility.location }}</p>
-                                <small>Created {{ facility.created_at|timesince }} ago</small>
-                            </div>
-                            <div class="activity-status">
-                                <span class="status-badge {% if facility.is_active %}active{% else %}inactive{% endif %}">
-                                    {% if facility.is_active %}Active{% else %}Inactive{% endif %}
-                                </span>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="no-data">No facilities created yet.</p>
-            {% endif %}
-        </div>
-
-        <div class="activity-section">
-            <h2>Recent Vaccines</h2>
-            {% if recent_vaccines %}
-                <div class="activity-list">
-                    {% for vaccine in recent_vaccines %}
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-syringe text-green"></i>
-                            </div>
-                            <div class="activity-content">
-                                <h4>{{ vaccine.name }}</h4>
-                                <p>{{ vaccine.diseasePrevented }}</p>
-                                <small>Created {{ vaccine.created_at|timesince }} ago</small>
-                            </div>
-                            <div class="activity-status">
-                                <span class="status-badge {% if vaccine.is_active %}active{% else %}inactive{% endif %}">
-                                    {% if vaccine.is_active %}Active{% else %}Inactive{% endif %}
-                                </span>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="no-data">No vaccines created yet.</p>
-            {% endif %}
-        </div>
+        <h2>Recent Activity</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in recent_logs %}
+                <tr>
+                    <td>{{ log.timestamp }}</td>
+                    <td>{{ log.action }}</td>
+                    <td>{{ log.user.username }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
-
-{%end block%}
+{% endblock %}

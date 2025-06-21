@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import User, SystemReport,HealthFacility,Vaccine
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required , user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -17,9 +17,11 @@ from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
 from io import StringIO, BytesIO
 from openpyxl import Workbook
-from api.serializers import (HealthFacilitySerializer, VaccineSerializer)
+from api.serializers import (HealthFacilitySerializer, VaccineSerializer,FacilityAdminCreationSerializer)
 from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
 import logging
+from django.views.decorators.csrf import csrf_exempt
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +42,6 @@ class SystemAdminDashboard(APIView):
             ]
         })
 #END
-
 
 #Reports by System admin
 class ReportBaseView(UserPassesTestMixin):
@@ -148,10 +149,13 @@ class DownloadReportView(ReportBaseView, View):
             return HttpResponse(status=404)
 #END
 
+
 #FACILITY ADMIN 
 class IsSystemAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.role == 'SYSTEM_ADMIN'
+    def is_system_admin(user):
+     return user.role == 'SYSTEM_ADMIN'
 #END
 
 #HEALTH FACILITY & VACCINE 
@@ -169,21 +173,21 @@ class HealthFacilityDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = HealthFacilitySerializer
 
 class CreateFacilityWithAdminView(generics.CreateAPIView):
-   # permission_classes = [IsSystemAdmin]
-    #serializer_class = FacilityAdminCreationSerializer
+    permission_classes = [IsSystemAdmin]
+    serializer_class = FacilityAdminCreationSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create Facility Admin user
-        #admin_user = User.objects.create_user(
-        #    username=serializer.validated_data['admin_username'],
-         #   email=serializer.validated_data['admin_email'],
-          #  password=serializer.validated_data['admin_password'],
-           # role='FACILITY_ADMIN',
-            #must_change_password=True
-        #)
+        #Create Facility Admin user
+        admin_user = User.objects.create_user(
+        username=serializer.validated_data['admin_username'],
+        email=serializer.validated_data['admin_email'],
+        password=serializer.validated_data['admin_password'],
+        role='FACILITY_ADMIN',
+        must_change_password=True
+        )
 
         # Create Health Facility
         facility = HealthFacility.objects.create(
@@ -193,9 +197,9 @@ class CreateFacilityWithAdminView(generics.CreateAPIView):
             created_by=request.user
         )
 
-        # Return facility data with admin info
-        #facility_serializer = HealthFacilitySerializer(facility)
-        #return Response(facility_serializer.data, status=status.HTTP_201_CREATED)
+        #Return facility data with admin info
+        facility_serializer = HealthFacilitySerializer(facility)
+        return Response(facility_serializer.data, status=status.HTTP_201_CREATED)
 
 class VaccineListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsSystemAdmin]
@@ -214,18 +218,16 @@ class VaccineDetailView(generics.RetrieveUpdateDestroyAPIView):
 logger = logging.getLogger(__name__)
 
 #LOGIN VIEWS
+@csrf_exempt
 @login_required
 @staff_member_required
 def dashboard(request):
  try:
     context = {
-        'facility_count': HealthFacility.objects.count(),
-            'active_facility_count': HealthFacility.objects.filter(is_active=True).count(),
-            'vaccine_count': Vaccine.objects.count(),
-            'active_vaccine_count': Vaccine.objects.filter(is_active=True).count(),
+            'facility_count': HealthFacility.objects.count(),
+            'vaccine_count': Vaccine.objects.count(),  
             'admin_count': User.objects.filter(role='FACILITY_ADMIN').count(),
-            'recent_facilities': HealthFacility.objects.order_by('-created_at')[:5],
-            'recent_vaccines': Vaccine.objects.order_by('-created_at')[:5],
+    
     }
     return render(request, 'sysadmin/dashboard.html', context)
  except Exception as e:
@@ -233,6 +235,7 @@ def dashboard(request):
         messages.error(request, "An error occurred while loading the dashboard.")
         return render(request, 'sysadmin/dashboard.html', {})
 
+@csrf_exempt
 @login_required
 @staff_member_required
 def facilities(request):
@@ -267,7 +270,7 @@ def facilities(request):
     }
     return render(request, 'sysadmin/facilities.html', context)
 
-
+@csrf_exempt
 @login_required
 @staff_member_required
 def create_facility(request):
@@ -294,6 +297,7 @@ def create_facility(request):
     return render(request, 'sysadmin/create_facility.html', {'form': form})
 
 
+@csrf_exempt
 @login_required
 @staff_member_required
 def create_vaccine(request):
@@ -322,6 +326,8 @@ def create_vaccine(request):
     
     return render(request, 'sysadmin/create_vaccine.html', {'form': form})
 
+
+@csrf_exempt
 @login_required
 @staff_member_required
 def vaccines(request):
@@ -356,6 +362,7 @@ def vaccines(request):
     return render(request, 'sysadmin/vaccines.html', context)
 
 
+@csrf_exempt
 @login_required
 @staff_member_required
 def create_facility_admin(request):
@@ -398,7 +405,7 @@ def create_facility_admin(request):
     
     return render(request, 'sysadmin/create_facility_admin.html', {'form': form}) 
 
-
+@csrf_exempt
 @login_required
 @staff_member_required
 def facility_admin_detail(request, admin_id):
@@ -464,6 +471,7 @@ def toggle_vaccine_status(request, vaccine_id):
             'message': 'An error occurred while updating the vaccine status'
         })
 
+@login_required
 def home(request):
     """Home page redirect"""
     if request.user.is_authenticated:

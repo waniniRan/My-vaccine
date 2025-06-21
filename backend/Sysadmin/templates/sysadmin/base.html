@@ -22,7 +22,6 @@
                     <li><a href="{% url 'sysadmin:create_facility_admin' %}" class="{% if request.resolver_match.url_name == 'create_facility_admin' %}active{% endif %}">Create Facility Admin</a></li> 
                     <li><a href="{% url 'sysadmin:create_vaccine' %}" class="{% if request.resolver_match.url_name == 'create_vaccine' %}active{% endif %}">Create Vaccines</a></li>
                     <li><a href="{% url 'sysadmin:facilities' %}" class="{% if request.resolver_match.url_name == 'facilities' %}active{% endif %}">Health Facilities</a></li>
-
                     <li><a href="{% url 'sysadmin:vaccines' %}" class="{% if request.resolver_match.url_name == 'vaccines' %}active{% endif %}">Vaccines</a></li>
                     <a href="{% url 'login' %}">Login</a>
                     <li><a href="{% url 'logout' %}">Logout</a></li>

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-
+from django.db import transaction
 
 #DEFINE THE ALL USERS 
 class User(AbstractUser):
@@ -76,7 +76,7 @@ class HealthFacility(models.Model):
         ('HEALTH_CENTER', 'Health Center'),
     )
     prefix=models.CharField(max_length=1, unique=True, editable=False) #eg., K , M
-    ID = models.CharField(max_length=10, unique=True, editable=False)
+    ID = models.CharField(max_length=15, unique=True, editable=False)
     name = models.CharField(max_length=200)
     facility_type = models.CharField(max_length=50, choices=FACILITY_TYPES)
     location = models.CharField(max_length=100)
@@ -99,16 +99,21 @@ class HealthFacility(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk: #new instances
-         self.prefix = self._generate_next_prefix()
-         self.ID = f"{self.prefix}0000"
-        super().save(*args, **kwargs)   
+         with transaction.atomic():
+           self.prefix = self._generate_next_prefix()
+           self.ID = f"{self.prefix}0001" #facility gets 0001
+        super().save(*args, **kwargs)
+
     def _generate_next_prefix(self):
-        existing_prefixes = HealthFacility.objects.values_list('prefix', flat=True)
-        for ascii_code in range(ord('A'), ord('Z') + 1):
-            candidate = chr(ascii_code)
-            if candidate not in existing_prefixes:
-                return candidate
-        raise ValueError("All prefixes A-Z are used. Please expand logic.")
+        last_facility = HealthFacility.objects.select_for_update().order_by('prefix').last()
+        if not last_facility:
+          return 'A'
+        last_prefix = last_facility.prefix
+        if last_prefix == 'Z':
+          raise ValueError("All prefixes A-Z are used. Please expand logic.")
+        return chr(ord(last_prefix) + 1)
+
+
     def __str__(self):
         return f"{self.name} {self.ID} ({self.get_facility_type_display()})"
 #END
@@ -131,3 +136,29 @@ class Vaccine(models.Model):
     def __str__(self):
         return f"{self.name} at {self.facility.name}"
 #END
+
+class FacilityAdmin(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name= 'facility_admin'
+        )
+    facility = models.OneToOneField(HealthFacility, on_delete=models.CASCADE)
+    admin_id = models.CharField(max_length=15, unique=True, editable=False)
+    phone= models.CharField(max_length=20, blank=True)
+
+    is_active=models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+  
+    def save(self, *args, **kwargs):
+        if not self.pk:  # New instance
+            with transaction.atomic():
+                # Admin always gets the facility prefix + 0002
+                self.admin_id = f"{self.facility.prefix}0002"
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.admin_id} (Facility Admin)"
+    
+    

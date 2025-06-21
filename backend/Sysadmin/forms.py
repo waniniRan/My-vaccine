@@ -89,7 +89,7 @@ class Vaccinationform(forms.ModelForm):
                 'placeholder': 'e.g., 6-12 months, Adults, etc.'
             })
         }
-    
+    '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only show active facilities
@@ -97,8 +97,9 @@ class Vaccinationform(forms.ModelForm):
         
         # Make facility field required
         self.fields['facility'].required = True
+        self.fields['facility']= kwargs.get('facility', None)
         self.fields['facility'].help_text = "Select at least one facility where this vaccine is available"
-
+     '''
     def clean_facility(self):
         facilities = self.cleaned_data.get('facility')
         if not facilities:
