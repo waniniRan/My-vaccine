@@ -1,7 +1,27 @@
 # facilities/serializers.py
 from rest_framework import serializers
 from Sysadmin.models import HealthFacility, Vaccine
-from Sysadmin.models import User
+from Sysadmin.models import CustomUser
+from django.contrib.auth.models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email'),
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', '')
+        )
+        return user
+
 
 class HealthFacilitySerializer(serializers.ModelSerializer):
     admin_username = serializers.CharField(source='admin.username', read_only=True)
@@ -55,3 +75,21 @@ class VaccineSerializer(serializers.ModelSerializer):
             'name': f.name,
             'type': f.get_facility_type_display()
         } for f in obj.facilities.all()]
+    
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'role', 'password']
+
+    def create(self, validated_data):
+        user = CustomUser.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email'),
+            password=validated_data['password'],
+            role=validated_data.get('role')
+        )
+        return user

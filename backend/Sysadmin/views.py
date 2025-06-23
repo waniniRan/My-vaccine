@@ -1,479 +1,490 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from .models import User, SystemReport,HealthFacility,Vaccine
-from django.contrib.auth.decorators import login_required , user_passes_test
-from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status,generics,permissions
-from .permissions import IsSystemAdmin
-from django.core.paginator import Paginator
-import csv
+from rest_framework import status, generics, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.views.decorators.http import require_http_methods
-from datetime import timedelta
-from django.http import JsonResponse, HttpResponse
-from django.views import View
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.paginator import Paginator
+from django.contrib.admin.models import LogEntry
+import csv
+import logging
 from io import StringIO, BytesIO
 from openpyxl import Workbook
-from api.serializers import (HealthFacilitySerializer, VaccineSerializer,FacilityAdminCreationSerializer)
+from django.http import HttpResponse
 from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
 import logging
-from django.views.decorators.csrf import csrf_exempt
+from api.serializers import (HealthFacilitySerializer, VaccineSerializer,FacilityAdminCreationSerializer, UserSerializer)
+from .models import User,HealthFacility,Vaccine
+#from django.views import View
 
 
 logger = logging.getLogger(__name__)
 
 
+#SYSTEM ADMIN 
+class IsSystemAdmin(permissions.BasePermission):
+    #System admin to only allow system admins to access views.
 
+    def has_permission(self, request, view):
+        return (
+        request.user and
+        request.user.is_authenticated and
+        hasattr (request.user, 'role') and
+        request.user.role == 'SYSTEM_ADMIN'
+        )
+#END
 
-#SYSTEM ADMIN
-class SystemAdminDashboard(APIView):
+#FACILITY ADMIN
+class IsFacilityAdmin(permissions.BasePermission):
+   #facility admins to access views.
+
+    def has_permission(self, request, view):
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            hasattr(request.user, 'role') and 
+            request.user.role == 'FACILITY_ADMIN'
+        )
+#END
+
+# Authentication Views
+class LoginAPIView(APIView):
+    
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not username or not password:
+            return Response({
+                'error': 'Username and password are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = authenticate(username=username, password=password)
+        
+        if user:
+            if user.is_active:
+                token, created = Token.objects.get_or_create(user=user)
+                return Response({
+                    'token': token.key,
+                    'user_id': user.id,
+                    'username': user.username,
+                    'role': user.role,
+                    'must_change_password': getattr(user, 'must_change_password', False)
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Account is disabled'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response({
+                'error': 'Invalid credentials'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+class LogoutAPIView(APIView):
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            # Delete the user's token
+            token = Token.objects.get(user=request.user)
+            token.delete()
+            return Response({
+                'message': 'Successfully logged out'
+            }, status=status.HTTP_200_OK)
+        except Token.DoesNotExist:
+            return Response({
+                'message': 'Successfully logged out'
+            }, status=status.HTTP_200_OK)
+
+# Dashboard Views
+class SystemAdminDashboardAPIView(APIView):
+    """
+    System Admin Dashboard API
+    """
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
     permission_classes = [IsSystemAdmin]
     
     def get(self, request):
-        return Response({
-            'message': 'Welcome System Administrator',
-            'actions': [
-                'Manage all users',
-                'Configure system settings',
-                'Create facilities'
-            ]
-        })
+        try:
+            dashboard_data = {
+                'message': 'Welcome System Administrator',
+                'stats': {
+                    'facility_count': HealthFacility.objects.count(),
+                    'vaccine_count': Vaccine.objects.count(),
+                    'facility_admin_count': User.objects.filter(role='FACILITY_ADMIN').count(),
+                    'active_facilities': HealthFacility.objects.filter(is_active=True).count(),
+                    'active_vaccines': Vaccine.objects.filter(is_active=True).count(),
+                },
+                'recent_facilities': HealthFacilitySerializer(
+                    HealthFacility.objects.order_by('-created_at')[:5], 
+                    many=True
+                ).data,
+                'recent_vaccines': VaccineSerializer(
+                    Vaccine.objects.order_by('-created_at')[:5], 
+                    many=True
+                ).data
+            }
+            return Response(dashboard_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Dashboard error: {str(e)}")
+            return Response({
+                'error': 'Failed to load dashboard data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 #END
 
-#Reports by System admin
-class ReportBaseView(UserPassesTestMixin):
-    def test_func(self):
-        return self.request.user.role == User.Role.SYSTEM_ADMIN
+# Health Facility API Views
+class HealthFacilityListCreateAPIView(generics.ListCreateAPIView):
+    queryset = HealthFacility.objects.all()
+    serializer_class = HealthFacilitySerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
+    def get_queryset(self):
+        queryset = HealthFacility.objects.select_related('admin', 'created_by').order_by('-created_at')
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                name__icontains=search
+            ) | queryset.filter(
+                location__icontains=search
+            )
+        
+        # Filter by type
+        facility_type = self.request.query_params.get('type', None)
+        if facility_type:
+            queryset = queryset.filter(facility_type=facility_type)
+        
+        # Filter by status
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save(created_by=self.request.user)
+        except Exception as e:
+            logger.error(f"Error creating facility: {str(e)}")
+            raise
+#END
 
-class GenerateReportView(ReportBaseView, APIView):
+
+class HealthFacilityDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = HealthFacility.objects.all()
+    serializer_class = HealthFacilitySerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
+    def perform_update(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except Exception as e:
+            logger.error(f"Error updating facility: {str(e)}")
+            raise
+#END
+
+
+class CreateFacilityWithAdminAPIView(APIView):
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+
+    def post(self, request):
+        serializer = FacilityAdminCreationSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    # Create Facility Admin user
+                    admin_user = User.objects.create_user(
+                        username=serializer.validated_data['admin_username'],
+                        email=serializer.validated_data['admin_email'],
+                        password=serializer.validated_data['admin_password'],
+                        role='FACILITY_ADMIN',
+                        must_change_password=True
+                    )
+
+                    # Create Health Facility
+                    facility = HealthFacility.objects.create(
+                        name=serializer.validated_data['facility_name'],
+                        facility_type=serializer.validated_data['facility_type'],
+                        location=serializer.validated_data.get('facility_location', ''),
+                        phone=serializer.validated_data.get('facility_phone', ''),
+                        email=serializer.validated_data.get('facility_email', ''),
+                        admin=admin_user,
+                        created_by=request.user
+                    )
+
+                    # Return facility data with admin info
+                    facility_serializer = HealthFacilitySerializer(facility)
+                    return Response({
+                        'message': 'Facility and admin created successfully',
+                        'facility': facility_serializer.data
+                    }, status=status.HTTP_201_CREATED)
+                    
+            except Exception as e:
+                logger.error(f"Error creating facility with admin: {str(e)}")
+                return Response({
+                    'error': 'Failed to create facility and admin user'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#END
+
+# Vaccine API Views
+class VaccineListCreateAPIView(generics.ListCreateAPIView):
+    """
+    List all vaccines or create a new vaccine
+    """
+    queryset = Vaccine.objects.all()
+    serializer_class = VaccineSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
+    def get_queryset(self):
+        queryset = Vaccine.objects.prefetch_related('facility').order_by('-created_at')
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                name__icontains=search
+            ) | queryset.filter(
+                diseasePrevented__icontains=search
+            )
+        
+        # Filter by facility
+        facility_id = self.request.query_params.get('facility', None)
+        if facility_id:
+            queryset = queryset.filter(facility__id=facility_id)
+        
+        # Filter by status
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+        
+        return queryset
+    
+    def perform_create(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save(created_by=self.request.user)
+        except Exception as e:
+            logger.error(f"Error creating vaccine: {str(e)}")
+            raise
+
+#END
+
+
+class VaccineDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete a vaccine
+    """
+    queryset = Vaccine.objects.all()
+    serializer_class = VaccineSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
+    def perform_update(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except Exception as e:
+            logger.error(f"Error updating vaccine: {str(e)}")
+            raise
+#END
+
+# Status Toggle Views
+class ToggleFacilityStatusAPIView(APIView):
+    """
+    Toggle facility active/inactive status
+    """
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
+    def post(self, request, facility_id):
+        try:
+            facility = get_object_or_404(HealthFacility, id=facility_id)
+            facility.is_active = not facility.is_active
+            facility.save()
+            
+            return Response({
+                'success': True,
+                'is_active': facility.is_active,
+                'message': f'Facility {"activated" if facility.is_active else "deactivated"} successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error toggling facility status: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'An error occurred while updating the facility status'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#END        
+
+class ToggleVaccineStatusAPIView(APIView):
+    """
+    Toggle vaccine active/inactive status
+    """
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
+    def post(self, request, vaccine_id):
+        try:
+            vaccine = get_object_or_404(Vaccine, id=vaccine_id)
+            vaccine.is_active = not vaccine.is_active
+            vaccine.save()
+            
+            return Response({
+                'success': True,
+                'is_active': vaccine.is_active,
+                'message': f'Vaccine {"activated" if vaccine.is_active else "deactivated"} successfully'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error toggling vaccine status: {str(e)}")
+            return Response({
+                'success': False,
+                'message': 'An error occurred while updating the vaccine status'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#END        
+
+# User Management Views
+class FacilityAdminListAPIView(generics.ListAPIView):
+    """
+    List all facility admins
+    """
+    queryset = User.objects.filter(role='FACILITY_ADMIN').select_related('managed_facility')
+    serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+
+#END    
+
+class FacilityAdminDetailAPIView(generics.RetrieveAPIView):
+    """
+    Retrieve facility admin details
+    """
+    queryset = User.objects.filter(role='FACILITY_ADMIN').select_related('managed_facility')
+    serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+#END
+
+# Report Generation Views
+class GenerateReportAPIView(APIView):
+    """
+    Generate various system reports
+    """
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsSystemAdmin]
+    
     def post(self, request):
         report_type = request.data.get('report_type')
-        format = request.data.get('format', 'csv')
+        format_type = request.data.get('format', 'json')
         filters = request.data.get('filters', {})
         
         # Validate report type
-        valid_types = dict(SystemReport.REPORT_TYPES).keys()
-        if report_type not in valid_types:
-            return Response({'error': 'Invalid report type'}, status=400)
+        if not report_type:
+            return Response({
+                'error': 'Report type is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Generate report based on type
-        if report_type == 'USER_ACTIVITY':
-            return self._generate_user_activity_report(format, filters)
-        elif report_type == 'LOGIN_HISTORY':
-            return self._generate_login_history_report(format, filters)
-        # Add other report types here...
-        
-    def _generate_user_activity_report(self, format, filters):
-        # Example implementation
-        from django.contrib.admin.models import LogEntry
-        queryset = LogEntry.objects.all()
-        
-        if filters.get('start_date'):
-            queryset = queryset.filter(action_time__gte=filters['start_date'])
-        if filters.get('end_date'):
-            queryset = queryset.filter(action_time__lte=filters['end_date'])
-        
-        if format == 'csv':
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = 'attachment; filename="user_activity.csv"'
-            
-            writer = csv.writer(response)
-            writer.writerow(['Timestamp', 'User', 'Action', 'Object'])
-            
-            for entry in queryset:
-                writer.writerow([
-                    entry.action_time,
-                    entry.user.get_full_name(),
-                    entry.get_action_flag_display(),
-                    str(entry.object_repr)
-                ])
-            
-            return response
-        
-        elif format == 'excel':
-            output = BytesIO()
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "User Activity"
-            
-            # Add headers
-            ws.append(['Timestamp', 'User', 'Action', 'Object'])
-            
-            # Add data
-            for entry in queryset:
-                 ws.append([
-                    entry.action_time,
-                    entry.user.get_full_name(),
-                    entry.get_action_flag_display(),
-                    str(entry.object_repr)
-                 ])
-            
-            wb.save(output)
-            response = HttpResponse(
-                output.getvalue(),
-                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
-            response['Content-Disposition'] = 'attachment; filename="user_activity.xlsx"'
-            return response
-        
-        return Response({'error': 'Unsupported format'}, status=400)
-
-class ReportListView(ReportBaseView, APIView):
-    def get(self, request):
-        reports = SystemReport.objects.filter(generated_by=request.user).order_by('-generated_at')
-        data = [{
-            'id': report.id,
-            'report_type': report.get_report_type_display(),
-            'generated_at': report.generated_at,
-            'parameters': report.parameters,
-            'is_downloaded': report.is_downloaded
-        } for report in reports]
-        return Response(data)
-
-class DownloadReportView(ReportBaseView, View):
-    def get(self, request, report_id):
         try:
-            report = SystemReport.objects.get(id=report_id, generated_by=request.user)
-            response = HttpResponse(report.report_file.read(), content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename="{report.report_file.name.split("/")[-1]}"'
-            
-            # Mark as downloaded
-            report.is_downloaded = True
-            report.save()
-            
-            return response
-        except SystemReport.DoesNotExist:
-            return HttpResponse(status=404)
-#END
-
-
-#FACILITY ADMIN 
-class IsSystemAdmin(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user.role == 'SYSTEM_ADMIN'
-    def is_system_admin(user):
-     return user.role == 'SYSTEM_ADMIN'
-#END
-
-#HEALTH FACILITY & VACCINE 
-class HealthFacilityListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsSystemAdmin]
-    queryset = HealthFacility.objects.all()
-    serializer_class = HealthFacilitySerializer
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-class HealthFacilityDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsSystemAdmin]
-    queryset = HealthFacility.objects.all()
-    serializer_class = HealthFacilitySerializer
-
-class CreateFacilityWithAdminView(generics.CreateAPIView):
-    permission_classes = [IsSystemAdmin]
-    serializer_class = FacilityAdminCreationSerializer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        #Create Facility Admin user
-        admin_user = User.objects.create_user(
-        username=serializer.validated_data['admin_username'],
-        email=serializer.validated_data['admin_email'],
-        password=serializer.validated_data['admin_password'],
-        role='FACILITY_ADMIN',
-        must_change_password=True
-        )
-
-        # Create Health Facility
-        facility = HealthFacility.objects.create(
-            name=serializer.validated_data['facility_name'],
-            facility_type=serializer.validated_data['facility_type'],
-            admin=admin_user,
-            created_by=request.user
-        )
-
-        #Return facility data with admin info
-        facility_serializer = HealthFacilitySerializer(facility)
-        return Response(facility_serializer.data, status=status.HTTP_201_CREATED)
-
-class VaccineListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsSystemAdmin]
-    queryset = Vaccine.objects.all()
-    serializer_class = VaccineSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-class VaccineDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsSystemAdmin]
-    queryset = Vaccine.objects.all()
-    serializer_class = VaccineSerializer
-#END
-
-logger = logging.getLogger(__name__)
-
-#LOGIN VIEWS
-@csrf_exempt
-@login_required
-@staff_member_required
-def dashboard(request):
- try:
-    context = {
-            'facility_count': HealthFacility.objects.count(),
-            'vaccine_count': Vaccine.objects.count(),  
-            'admin_count': User.objects.filter(role='FACILITY_ADMIN').count(),
+            if report_type == 'facilities':
+                return self._generate_facilities_report(format_type, filters)
+            elif report_type == 'vaccines':
+                return self._generate_vaccines_report(format_type, filters)
+            elif report_type == 'users':
+                return self._generate_users_report(format_type, filters)
+            else:
+                return Response({
+                    'error': 'Invalid report type'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error generating report: {str(e)}")
+            return Response({
+                'error': 'Failed to generate report'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    }
-    return render(request, 'sysadmin/dashboard.html', context)
- except Exception as e:
-        logger.error(f"Dashboard error: {str(e)}")
-        messages.error(request, "An error occurred while loading the dashboard.")
-        return render(request, 'sysadmin/dashboard.html', {})
-
-@csrf_exempt
-@login_required
-@staff_member_required
-def facilities(request):
-    """Enhanced facilities list with search and pagination"""
-    facility_list = HealthFacility.objects.select_related('admin').order_by('-created_at')
-    
-    # Search functionality
-    search_query = request.GET.get('search', '')
-    if search_query:
-        facility_list = facility_list.filter(
-            name__icontains=search_query
-        ) | facility_list.filter(
-            location__icontains=search_query
-        )
-    
-    # Filter by type
-    facility_type = request.GET.get('type', '')
-    if facility_type:
-        facility_list = facility_list.filter(facility_type=facility_type)
-    
-    # Pagination
-    paginator = Paginator(facility_list, 10)
-    page_number = request.GET.get('page')
-    facilities_page = paginator.get_page(page_number)
-    
-    context = {
-        'facilities': facilities_page,
-        'search_query': search_query,
-        'facility_type': facility_type,
-        'facility_types': HealthFacility.FACILITY_TYPES,
-        'total_count': facility_list.count()
-    }
-    return render(request, 'sysadmin/facilities.html', context)
-
-@csrf_exempt
-@login_required
-@staff_member_required
-def create_facility(request):
-    if request.method == 'POST':
-        form = healthfacilityform(request.POST)
-        if form.is_valid():
-           try:
-                  with transaction.atomic():
-                      facility = form.save(commit=False)
-                      facility.created_by = request.user
-                      facility.save()
-                    
-                      messages.success(request, f'Successfully created facility: {facility.name}')
-                    
-                      return redirect('sysadmin:facilities')
-           except Exception as e:
-                logger.error(f"Error creating facility: {str(e)}")
-                messages.error(request, "An error occurred while creating the facility.")
-        else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = healthfacilityform()
-    
-    return render(request, 'sysadmin/create_facility.html', {'form': form})
-
-
-@csrf_exempt
-@login_required
-@staff_member_required
-def create_vaccine(request):
-    if request.method == 'POST':
-        form = Vaccinationform(request.POST)
-        if form.is_valid():
-            try:
-                 with transaction.atomic():
-                       vaccine = form.save(commit=False)
-                       vaccine.created_by = request.user
-                       vaccine.save()
-            
-                       # Handle ManyToMany field for facilities
-                       form.save_m2m()
-            
-                       messages.success(request, f'Successfully created vaccine: {vaccine.name}')
-                       return redirect('sysadmin:vaccines')
-            except Exception as e:
-                logger.error(f"Error creating vaccine: {str(e)}")
-                messages.error(request, "An error occurred while creating the vaccine.")
-        else : 
-            messages.error(request, "Please correct the error below.")
-
-    else:
-        form = Vaccinationform()
-    
-    return render(request, 'sysadmin/create_vaccine.html', {'form': form})
-
-
-@csrf_exempt
-@login_required
-@staff_member_required
-def vaccines(request):
-    vaccine_list = Vaccine.objects.prefetch_related('facility').order_by('-created_at')
-    
-    # Search functionality
-    search_query = request.GET.get('search', '')
-    if search_query:
-        vaccine_list = vaccine_list.filter(
-            name__icontains=search_query
-        ) | vaccine_list.filter(
-            diseasePrevented__icontains=search_query
-        )
-    
-    # Filter by facility
-    facility_id = request.GET.get('facility', '')
-    if facility_id:
-        vaccine_list = vaccine_list.filter(facility__id=facility_id)
-    
-    # Pagination
-    paginator = Paginator(vaccine_list, 10)
-    page_number = request.GET.get('page')
-    vaccines_page = paginator.get_page(page_number)
-    
-    context = {
-        'vaccines': vaccines_page,
-        'search_query': search_query,
-        'facility_id': facility_id,
-        'facilities': HealthFacility.objects.filter(is_active=True),
-        'total_count': vaccine_list.count()
-    }
-    return render(request, 'sysadmin/vaccines.html', context)
-
-
-@csrf_exempt
-@login_required
-@staff_member_required
-def create_facility_admin(request):
-    if request.method == 'POST':
-        form = FacilityAdminCreationForm(request.POST)
-        if form.is_valid():
-            try:
-                 with transaction.atomic():
-                     
-                  # Create Facility Admin User
-                  admin_user = User.objects.create_user(
-                  username=form.cleaned_data['username'],
-                  email=form.cleaned_data['email'],
-                  password=form.cleaned_data['password'],
-                  role='FACILITY_ADMIN',
-                  must_change_password=True
-                        )
-            
-                  # Create Health Facility
-                 facility = HealthFacility.objects.create(
-                 name=form.cleaned_data['facility_name'],
-                 facility_type=form.cleaned_data['facility_type'],
-                 location= form.cleaned_data['facility_location'],
-                 phone= form.cleaned_data['facility_phone'],
-                 email= form.cleaned_data['facility_email'],
-                 admin=admin_user,
-                 created_by=request.user
-                   )
-            
-                 messages.success(request, f'Successfully created {facility.name} with admin {admin_user.username}')
-            
-                 return redirect('sysadmin:facilities')
-            except Exception as e:
-                logger.error(f"Error creating facility admin: {str(e)}")
-                messages.error(request, "An error occurred while creating the facility and admin.")
-        else:
-            messages.error(request, "Please correct the errors below.")          
-    else:
-        form = FacilityAdminCreationForm()
-    
-    return render(request, 'sysadmin/create_facility_admin.html', {'form': form}) 
-
-@csrf_exempt
-@login_required
-@staff_member_required
-def facility_admin_detail(request, admin_id):
-    admin = get_object_or_404(
-        User.objects.select_related('managed_facility'),
-        id=admin_id,
-        role='FACILITY_ADMIN'
-    )
-
-    try:
-          facility = admin.managed_facility
-    except:
-         facility=None
-
-         context = {
-        'admin': admin,
-        'facility': facility,
-        'last_login': admin.last_login.strftime('%Y-%m-%d %H:%M') if admin.last_login else 'Never'
-                  }
-    return render(request, 'sysadmin/facility_admin_detail.html', context)
-
-@login_required
-@staff_member_required
-@require_http_methods(["POST"])
-def toggle_facility_status(request, facility_id):
-    """Toggle facility active/inactive status via AJAX"""
-    try:
-        facility = get_object_or_404(HealthFacility, id=facility_id)
-        facility.is_active = not facility.is_active
-        facility.save()
+    def _generate_facilities_report(self, format_type, filters):
+        queryset = HealthFacility.objects.select_related('admin', 'created_by')
         
-        return JsonResponse({
-            'success': True,
-            'is_active': facility.is_active,
-            'message': f'Facility {"activated" if facility.is_active else "deactivated"} successfully'
-        })
-    except Exception as e:
-        logger.error(f"Error toggling facility status: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': 'An error occurred while updating the facility status'
-        })
-
-@login_required
-@staff_member_required
-@require_http_methods(["POST"])
-def toggle_vaccine_status(request, vaccine_id):
-    """Toggle vaccine active/inactive status via AJAX"""
-    try:
-        vaccine = get_object_or_404(Vaccine, id=vaccine_id)
-        vaccine.is_active = not vaccine.is_active
-        vaccine.save()
+        if filters.get('is_active') is not None:
+            queryset = queryset.filter(is_active=filters['is_active'])
         
-        return JsonResponse({
-            'success': True,
-            'is_active': vaccine.is_active,
-            'message': f'Vaccine {"activated" if vaccine.is_active else "deactivated"} successfully'
-        })
-    except Exception as e:
-        logger.error(f"Error toggling vaccine status: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': 'An error occurred while updating the vaccine status'
-        })
+        if format_type == 'json':
+            serializer = HealthFacilitySerializer(queryset, many=True)
+            return Response({
+                'report_type': 'facilities',
+                'data': serializer.data,
+                'count': queryset.count()
+            })
+        elif format_type == 'csv':
+            return self._export_facilities_csv(queryset)
+        
+    def _generate_vaccines_report(self, format_type, filters):
+        queryset = Vaccine.objects.prefetch_related('facility')
+        
+        if filters.get('is_active') is not None:
+            queryset = queryset.filter(is_active=filters['is_active'])
+        
+        if format_type == 'json':
+            serializer = VaccineSerializer(queryset, many=True)
+            return Response({
+                'report_type': 'vaccines',
+                'data': serializer.data,
+                'count': queryset.count()
+            })
+        elif format_type == 'csv':
+            return self._export_vaccines_csv(queryset)
+    
+    def _export_facilities_csv(self, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="facilities_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Type', 'Location', 'Admin', 'Active', 'Created At'])
+        
+        for facility in queryset:
+            writer.writerow([
+                facility.name,
+                facility.get_facility_type_display(),
+                facility.location,
+                facility.admin.username if facility.admin else 'No Admin',
+                'Yes' if facility.is_active else 'No',
+                facility.created_at.strftime('%Y-%m-%d %H:%M')
+            ])
+        
+        return response
+    
+    def _export_vaccines_csv(self, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="vaccines_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Name', 'Disease Prevented', 'Facilities', 'Active', 'Created At'])
+        
+        for vaccine in queryset:
+            facilities = ', '.join([f.name for f in vaccine.facility.all()])
+            writer.writerow([
+                vaccine.name,
+                vaccine.diseasePrevented,
+                facilities,
+                'Yes' if vaccine.is_active else 'No',
+                vaccine.created_at.strftime('%Y-%m-%d %H:%M')
+            ])
+        
+        return response
+    #END
 
-@login_required
-def home(request):
-    """Home page redirect"""
-    if request.user.is_authenticated:
-        return redirect('sysadmin:dashboard')
-    return render(request, 'sysadmin/home.html')
+  
