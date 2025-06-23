@@ -8,14 +8,15 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-from django.core.paginator import Paginator
+#from django.core.paginator import Paginator
+from rest_framework.renderers import TemplateHTMLRenderer
 from django.contrib.admin.models import LogEntry
 import csv
 import logging
 from io import StringIO, BytesIO
 from openpyxl import Workbook
 from django.http import HttpResponse
-from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
+#from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
 import logging
 from api.serializers import (HealthFacilitySerializer, VaccineSerializer,FacilityAdminCreationSerializer, UserSerializer)
 from .models import User,HealthFacility,Vaccine
@@ -487,4 +488,12 @@ class GenerateReportAPIView(APIView):
         return response
     #END
 
-  
+
+#DASH
+class DashboardAPIView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'Sysadmin/dashboard.html'
+
+    def get(self, request):
+        return Response({'user': request.user})
+ 

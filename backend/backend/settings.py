@@ -129,7 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'Sysadmin.User'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -153,9 +153,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'sysadmin:dashboard'
-LOGOUT_REDIRECT_URL = 'login'
 
 
 REST_FRAMEWORK = {
@@ -180,16 +177,16 @@ REST_FRAMEWORK = {
 
 # CORS settings (if needed for frontend)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React default
-    "http://127.0.0.1:3000",
-    "http://localhost:8080",  # Vue default
+  #  "http://localhost:3000",  # React default
+   # "http://127.0.0.1:3000",
+   # "http://localhost:8080",  # Vue default
     # Add your frontend URLs here
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Custom User Model (make sure this is set)
-AUTH_USER_MODEL = 'your_app.User'  # Replace with your actual app name
+#  User Model (make sure this is set)
+AUTH_USER_MODEL = 'Sysadmin.User'  
 
 # Logging Configuration
 LOGGING = {
@@ -214,3 +211,7 @@ LOGGING = {
         },
     },
 }
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'sysadmin:dashboard'
+LOGOUT_REDIRECT_URL = 'login'

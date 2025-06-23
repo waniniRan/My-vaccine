@@ -122,19 +122,35 @@ class HealthFacility(models.Model):
 class Vaccine(models.Model):
     name = models.CharField(max_length=100)
     v_ID = models.CharField(max_length=10)
-    description = models.TextField(blank=True)
-    dosage = models.CharField(max_length=50)  # "2 doses", "Single dose", etc.
-    diseasePrevented = models.CharField(max_length=100)
-    recommended_age= models.CharField(max_length=20)
-    facility = models.ManyToManyField( HealthFacility,related_name='vaccines')
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name='created_vaccines')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=True)
+def save(self, *args, **kwargs):
+        if not self.pk and not self.v_ID:  # New instance without v_ID
+         with transaction.atomic():
+            # Generate v_ID like V0001, V0002, etc.
+            last_vaccine = Vaccine.objects.select_for_update().order_by('v_ID').last()
+            if not last_vaccine or not last_vaccine.v_ID:
+                self.v_ID = 'V0001'
+            else:
+                # Extract number and increment
+                last_num = int(last_vaccine.v_ID[1:])  # Remove 'V' prefix
+                self.v_ID = f'V{last_num + 1:04d}'  # Format as V0001, V0002, etc.
+         super().save(*args, **kwargs)
+         
+description = models.TextField(blank=True)
+dosage = models.CharField(max_length=50)  # "2 doses", "Single dose", etc.
+diseasePrevented = models.CharField(max_length=100)
+recommended_age= models.CharField(max_length=20)
+facility = models.ManyToManyField( HealthFacility,related_name='vaccines')
+created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name='created_vaccines')
+created_at = models.DateTimeField(auto_now_add=True)
+updated_at = models.DateTimeField(auto_now=True)
+is_active = models.BooleanField(default=True)
 
     
-    def __str__(self):
-        return f"{self.name} at {self.facility.name}"
+def __str__(self):
+    facilities = ", ".join([f.name for f in self.facility.all()[:3]])  # Show first 3 facilities
+    if self.facility.count() > 3:
+        facilities += f" and {self.facility.count() - 3} more"
+    return f"{self.name} - Available at: {facilities}" if facilities else f"{self.name} - No facilities assigned"
 #END
 
 class FacilityAdmin(models.Model):

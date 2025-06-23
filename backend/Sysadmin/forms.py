@@ -89,20 +89,10 @@ class Vaccinationform(forms.ModelForm):
                 'placeholder': 'e.g., 6-12 months, Adults, etc.'
             })
         }
-    '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Only show active facilities
-        self.fields['facility'].queryset = HealthFacility.objects.filter(is_active=True)
-        
-        # Make facility field required
-        self.fields['facility'].required = True
-        self.fields['facility']= kwargs.get('facility', None)
-        self.fields['facility'].help_text = "Select at least one facility where this vaccine is available"
-     '''
+    
     def clean_facility(self):
         facilities = self.cleaned_data.get('facility')
-        if not facilities:
+        if not facilities or not facilities.exists():
             raise ValidationError("Please select at least one facility")
         return facilities
 

@@ -1,10 +1,14 @@
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from Sysadmin.views import HealthFacilityListCreateView,HealthFacilityDetailView,CreateFacilityWithAdminView,VaccineListCreateView,VaccineDetailView
 from Sysadmin import views
-from .views import HealthFacilityListCreateAPIView, HealthFacilityDetailAPIView,CreateFacilityWithAdminAPIView,ToggleFacilityStatusAPIView
-from .views import LoginAPIView, LogoutAPIView, SystemAdminDashboardAPIView,VaccineDetailAPIView,VaccineListCreateAPIView
-from .views import ToggleVaccineStatusAPIView,FacilityAdminListAPIView
+from .views import (
+    HealthFacilityListCreateAPIView, HealthFacilityDetailAPIView,
+    CreateFacilityWithAdminAPIView, ToggleFacilityStatusAPIView,
+    LoginAPIView, LogoutAPIView, SystemAdminDashboardAPIView,
+    VaccineDetailAPIView, VaccineListCreateAPIView,
+    ToggleVaccineStatusAPIView, FacilityAdminListAPIView,
+    FacilityAdminDetailAPIView, GenerateReportAPIView, DashboardAPIView  
+)
 
 app_name = 'sysadmin'
 
@@ -14,8 +18,8 @@ urlpatterns = [
     path('auth/logout/', views.LogoutAPIView.as_view(), name='api_logout'),
     
     # Dashboard
-    path('dashboard/', views.SystemAdminDashboardAPIView.as_view(), name='api_dashboard'),
-    
+     path('dashboard-page/', DashboardAPIView.as_view(), name='dashboard_page'),
+     
     # Health Facilities
     path('facilities/', views.HealthFacilityListCreateAPIView.as_view(), name='facility_list_create'),
     path('facilities/<int:pk>/', views.HealthFacilityDetailAPIView.as_view(), name='facility_detail'),

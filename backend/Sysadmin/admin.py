@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import User
 from .models import HealthFacility, Vaccine
 
-#USERADMIN
+
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'role', 'is_active')
     list_filter = ('role', 'is_active')
@@ -11,13 +11,13 @@ class CustomUserAdmin(UserAdmin):
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email')}),
         ('Permissions', {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+          'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
         }),
         ('Important Dates', {'fields': ('last_login', 'date_joined')}),
         ('Custom Fields', {'fields': ('role', 'must_change_password')}),
     )
     add_fieldsets = (
-        (None, {
+       (None, {
             'classes': ('wide',),
             'fields': ('username', 'email', 'password1', 'password2', 'role'),
         }),
