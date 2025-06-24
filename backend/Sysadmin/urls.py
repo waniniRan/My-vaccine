@@ -1,7 +1,7 @@
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from Sysadmin import views
-from .views import (
+from Sysadmin.views import (
     HealthFacilityListCreateAPIView, HealthFacilityDetailAPIView,
     CreateFacilityWithAdminAPIView, ToggleFacilityStatusAPIView,
     LoginAPIView, LogoutAPIView, SystemAdminDashboardAPIView,
@@ -18,7 +18,7 @@ urlpatterns = [
     path('auth/logout/', views.LogoutAPIView.as_view(), name='api_logout'),
     
     # Dashboard
-     path('dashboard-page/', DashboardAPIView.as_view(), name='dashboard_page'),
+     path('dashboard/', DashboardAPIView.as_view(), name='dashboard_page'),
      
     # Health Facilities
     path('facilities/', views.HealthFacilityListCreateAPIView.as_view(), name='facility_list_create'),
@@ -38,8 +38,6 @@ urlpatterns = [
     # Reports
     path('reports/generate/', views.GenerateReportAPIView.as_view(), name='generate_report'),
 ] 
-
-
 
 
 

@@ -12,10 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import os
 
-load_dotenv ()
+#load_dotenv ()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,15 +37,21 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
     ],
 }
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,
 }
 
 
+    
 
 # Application definition
 
@@ -58,9 +64,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'api',
     'rest_framework',
-    'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'corsheaders',
     'Sysadmin',
+    'Facilityadmin',
+    'HealthcareW',
+    'django_filters',
 ]
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -186,7 +195,8 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 #  User Model (make sure this is set)
-AUTH_USER_MODEL = 'Sysadmin.User'  
+AUTH_USER_MODEL = 'Sysadmin.User'
+
 
 # Logging Configuration
 LOGGING = {
@@ -212,6 +222,3 @@ LOGGING = {
     },
 }
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'sysadmin:dashboard'
-LOGOUT_REDIRECT_URL = 'login'

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
 from django.db import transaction
+
 
 #DEFINE THE ALL USERS 
 class User(AbstractUser):
@@ -9,7 +9,7 @@ class User(AbstractUser):
         SYSTEM_ADMIN = 'SYSTEM_ADMIN', 'System Administrator'
         FACILITY_ADMIN = 'FACILITY_ADMIN', 'Facility Administrator'
         WORKER = 'HEALTHCARE WORKER', 'Worker'
-        USER = 'GUARDIAN', 'User'
+        USER = 'GUARDIAN', 'Guardian'
     
     role = models.CharField(
         max_length=20,
@@ -43,8 +43,6 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         self.full_clean()  # Runs clean() method before saving
         super().save(*args, **kwargs)
-
-
 #END
 
 # REPORTS OF THE SYSTEM
@@ -112,7 +110,12 @@ class HealthFacility(models.Model):
         if last_prefix == 'Z':
           raise ValueError("All prefixes A-Z are used. Please expand logic.")
         return chr(ord(last_prefix) + 1)
-
+    def __str__(self):
+         facilities = ", ".join([f.name for f in self.facility.all()[:3]])  # Show first 3 facilities
+         if self.facility.count() > 3:
+          facilities += f" and {self.facility.count() - 3} more"
+         return f"{self.name} - Available at: {facilities}" if facilities else f"{self.name} - No facilities assigned"
+#END  
 
     def __str__(self):
         return f"{self.name} {self.ID} ({self.get_facility_type_display()})"
@@ -122,37 +125,21 @@ class HealthFacility(models.Model):
 class Vaccine(models.Model):
     name = models.CharField(max_length=100)
     v_ID = models.CharField(max_length=10)
-def save(self, *args, **kwargs):
-        if not self.pk and not self.v_ID:  # New instance without v_ID
-         with transaction.atomic():
-            # Generate v_ID like V0001, V0002, etc.
-            last_vaccine = Vaccine.objects.select_for_update().order_by('v_ID').last()
-            if not last_vaccine or not last_vaccine.v_ID:
-                self.v_ID = 'V0001'
-            else:
-                # Extract number and increment
-                last_num = int(last_vaccine.v_ID[1:])  # Remove 'V' prefix
-                self.v_ID = f'V{last_num + 1:04d}'  # Format as V0001, V0002, etc.
-         super().save(*args, **kwargs)
-         
-description = models.TextField(blank=True)
-dosage = models.CharField(max_length=50)  # "2 doses", "Single dose", etc.
-diseasePrevented = models.CharField(max_length=100)
-recommended_age= models.CharField(max_length=20)
-facility = models.ManyToManyField( HealthFacility,related_name='vaccines')
-created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name='created_vaccines')
-created_at = models.DateTimeField(auto_now_add=True)
-updated_at = models.DateTimeField(auto_now=True)
-is_active = models.BooleanField(default=True)
+    description = models.TextField(blank=True)
+    dosage = models.CharField(max_length=50, default='1 dose')  # "2 doses", "Single dose", etc.
+    diseasePrevented = models.CharField(max_length=100, default='Tuberculosis')
+    recommended_age= models.CharField(max_length=20, default='at birth')
+    facility = models.ManyToManyField( HealthFacility,related_name='vaccines')
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name='created_vaccines', default= 1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+        
+    def __str__ (self):
+        return f"{self.name} ({self.v_ID}) - {self.recommended_age} months"
+#END     
 
-    
-def __str__(self):
-    facilities = ", ".join([f.name for f in self.facility.all()[:3]])  # Show first 3 facilities
-    if self.facility.count() > 3:
-        facilities += f" and {self.facility.count() - 3} more"
-    return f"{self.name} - Available at: {facilities}" if facilities else f"{self.name} - No facilities assigned"
-#END
-
+#FACILITY ADMIN
 class FacilityAdmin(models.Model):
     user = models.OneToOneField(
         User,
@@ -161,9 +148,12 @@ class FacilityAdmin(models.Model):
         )
     facility = models.OneToOneField(HealthFacility, on_delete=models.CASCADE)
     admin_id = models.CharField(max_length=15, unique=True, editable=False)
+    admin_username=models.CharField(max_length=150, unique=True, default='Admin')
     phone= models.CharField(max_length=20, blank=True)
-
+    fullname= models.CharField(max_length=120, default='Fac_admin')
     is_active=models.BooleanField(default=True)
+    temporary_password = models.CharField(max_length=128, default='K-changeme123')
+    password_changed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
   
@@ -176,5 +166,37 @@ class FacilityAdmin(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.admin_id} (Facility Admin)"
+#END
+
+class SystemActivityLog(models.Model):
+    """
+    Log model to track system administrator activities
+    """
+    ACTION_CHOICES = [
+        ('facility_created', 'Facility Created'),
+        ('facility_updated', 'Facility Updated'),
+        ('facility_deactivated', 'Facility Deactivated'),
+        ('admin_created', 'Facility Admin Created'),
+        ('admin_updated', 'Facility Admin Updated'),
+        ('vaccine_created', 'Vaccine Created'),
+        ('vaccine_updated', 'Vaccine Updated'),
+        ('report_generated', 'Report Generated'),
+    ]
+    admin = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='activity_logs'
+    )
+    action = models.CharField(max_length=30, choices=ACTION_CHOICES)
+    target_type = models.CharField(max_length=50)  # 'facility', 'vaccine', 'admin'
+    target_id = models.CharField(max_length=50)
+    description = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
     
+    class Meta:
+        db_table = 'system_activity_logs'
+        ordering = ['-timestamp']
     
+    def __str__(self):
+        return f"{self.admin.username} - {self.action} - {self.timestamp}"

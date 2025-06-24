@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics, permissions
@@ -8,19 +8,22 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
-#from django.core.paginator import Paginator
-from rest_framework.renderers import TemplateHTMLRenderer
+from django.core.paginator import Paginator
+#from rest_framework.renderers import TemplateHTMLRenderer
 from django.contrib.admin.models import LogEntry
 import csv
 import logging
-from io import StringIO, BytesIO
 from openpyxl import Workbook
 from django.http import HttpResponse
-#from .forms import FacilityAdminCreationForm, Vaccinationform , healthfacilityform
 import logging
 from api.serializers import (HealthFacilitySerializer, VaccineSerializer,FacilityAdminCreationSerializer, UserSerializer)
-from .models import User,HealthFacility,Vaccine
-#from django.views import View
+from .models import User,HealthFacility,Vaccine,FacilityAdmin
+from django.views import View
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from rest_framework.decorators import action
+from rest_framework import viewsets
+
 
 
 logger = logging.getLogger(__name__)
@@ -196,7 +199,7 @@ class HealthFacilityDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
             raise
 #END
 
-
+#CREATE FACILITY ADMIN
 class CreateFacilityWithAdminAPIView(APIView):
     authentication_classes = [TokenAuthentication, SessionAuthentication]
     permission_classes = [IsSystemAdmin]
@@ -284,10 +287,9 @@ class VaccineListCreateAPIView(generics.ListCreateAPIView):
         except Exception as e:
             logger.error(f"Error creating vaccine: {str(e)}")
             raise
-
 #END
 
-
+#VACCINE DETAILS
 class VaccineDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update or delete a vaccine
@@ -359,7 +361,7 @@ class ToggleVaccineStatusAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 #END        
 
-# User Management Views
+# List 
 class FacilityAdminListAPIView(generics.ListAPIView):
     """
     List all facility admins
@@ -371,6 +373,7 @@ class FacilityAdminListAPIView(generics.ListAPIView):
 
 #END    
 
+#FACILITY DETAILS
 class FacilityAdminDetailAPIView(generics.RetrieveAPIView):
     """
     Retrieve facility admin details
@@ -487,13 +490,36 @@ class GenerateReportAPIView(APIView):
         
         return response
     #END
+#END
 
+class FacilityAdminViewSet(viewsets.ModelViewSet):
 
-#DASH
+    @action(detail=True, methods=['post'])
+    def reset_password(self, request, pk=None):
+        """Reset worker's password"""
+        worker = get_object_or_404(FacilityAdmin, pk=pk)
+        
+        # Generate new temporary password (you might want to use a more secure method)
+        import secrets
+        import string
+        
+        alphabet = string.ascii_letters + string.digits
+        new_password = ''.join(secrets.choice(alphabet) for i in range(12))
+        
+        worker.temporary_password = new_password
+        worker.password_changed = False
+        worker.save()
+        
+        return Response({
+            'message': f'Password reset for {worker.get_full_name()}.',
+            'temporary_password': new_password
+        })
+
 class DashboardAPIView(APIView):
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'Sysadmin/dashboard.html'
-
     def get(self, request):
-        return Response({'user': request.user})
- 
+        # Your dashboard logic here
+        data = {
+            'message': 'Dashboard data',
+            # Add your dashboard data
+        }
+        return Response(data, status=status.HTTP_200_OK)
