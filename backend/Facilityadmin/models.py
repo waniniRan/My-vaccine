@@ -1,8 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from Sysadmin.models import HealthFacility,FacilityAdmin,User
 from django.utils import timezone
-
-
+from django.core.exceptions import ValidationError
 #In the facility admin app we will set up the information for our healthcare worker
 #Facility admin has been registered by the system admin and here they are supposed to add this worker and monitor them
 
@@ -40,7 +39,7 @@ class HealthcareW(models.Model):
         ('suspended', 'Suspended'),
     ]   
  worker_id= models.CharField(max_length=15, unique=True, primary_key=True)
- username=models.CharField(max_length=100, unique=True)
+ worker_username=models.CharField(max_length=100, unique=True)
  first_name= models.CharField(max_length=30)
  last_name=models.CharField(max_length=30)
  email=models.EmailField(blank=True)
@@ -56,17 +55,49 @@ class HealthcareW(models.Model):
  created_at = models.DateTimeField(auto_now_add=True)
  updated_at = models.DateTimeField(auto_now=True)
  
+ def save(self, *args, **kwargs):
+        if not self.pk and not self.worker_id:
+            if not self.facility:
+                raise ValidationError("Facility must be assigned before saving worker")
+                
+            with transaction.atomic():
+                facility_prefix = self.facility.prefix
+                
+                # Get next sequential number using select_for_update to prevent race conditions
+                facility_locked = HealthFacility.objects.select_for_update().get(pk=self.facility.pk)
+                
+                # Count all people in this facility
+                count = 1  # Facility is 0001
+                
+                # Count admins
+                count += FacilityAdmin.objects.filter(
+                    admin_id__startswith=facility_prefix
+                ).count()
+                
+                # Count existing workers (with lock to prevent race conditions)
+                count += HealthcareW.objects.select_for_update().filter(
+                    worker_id__startswith=facility_prefix
+                ).count()
+                
+                # Get next sequential number
+                next_number = count + 1
+                self.worker_id = f"{facility_prefix}{str(next_number).zfill(4)}"
+                
+                # Auto-populate fields
+                if not self.worker_username and self.user:
+                    self.worker_username = self.user.username
+                
+        super().save(*args, **kwargs)
 
-
- class Meta:
-        db_table = 'healthcare_workers'
-        ordering = ['last_name', 'first_name']
+ @property
+ def fullname(self):
+    if self.user:
+        return f"{self.user.first_name} {self.user.last_name}".strip()
+    return ""
     
  def __str__(self):
-        return f"{self.first_name} {self.last_name} - {self.position}"
+        return f"{self.fullname} - {self.worker_id} ({self.position})"
      
- def get_full_name(self):
-        return f"{self.first_name} {self.last_name}"
     
  def activate(self):
         self.status = 'active'
@@ -77,6 +108,9 @@ class HealthcareW(models.Model):
         self.status = 'inactive'
         self.date_left = timezone.now()
         self.save()
+ class Meta:
+        db_table = 'healthcare_workers'
+        ordering = ['last_name', 'first_name']
 
 class WorkerActivityLog(models.Model): 
     Action_Choice = [
