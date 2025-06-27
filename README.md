@@ -1,6 +1,7 @@
 # My-vaccine
 When the code has been written and you're satisfied write the following in the terminal:
 cd My-vaccine
+
 .\env\Scripts\activate  
 cd backend
 python manage.py makemigrations   

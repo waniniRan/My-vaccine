@@ -16,13 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path , include
-
+from api.views.facility_view import CreateHealthFacility
 urlpatterns = [
     
     path('admin/', admin.site.urls),
     path('api/', include('Sysadmin.urls')),
     path('api/',include('HealthcareW.urls')),
     path('api/', include('Facilityadmin.urls')),
+
+
+     path("create-facility/", CreateHealthFacility.as_view(), name="create_facility"),
     
 ]
 

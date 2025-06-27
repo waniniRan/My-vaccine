@@ -515,6 +515,7 @@ class FacilityAdminViewSet(viewsets.ModelViewSet):
             'temporary_password': new_password
         })
 
+
 class DashboardAPIView(APIView):
     def get(self, request):
         # Your dashboard logic here

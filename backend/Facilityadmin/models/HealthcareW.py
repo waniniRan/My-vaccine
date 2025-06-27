@@ -2,26 +2,6 @@ from django.db import models, transaction
 from Sysadmin.models import HealthFacility,FacilityAdmin,User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-#In the facility admin app we will set up the information for our healthcare worker
-#Facility admin has been registered by the system admin and here they are supposed to add this worker and monitor them
-
-class FacilityReport(models.Model):
-    REPORT_TYPES = [
-        ('vaccination_coverage', 'Vaccination Coverage'),
-        ('child_registration', 'Child Registration'),
-        ('growth_monitoring', 'Growth Monitoring'),
-        ('overdue_vaccinations', 'Overdue Vaccinations'),
-    ]
-    facility=models.ForeignKey(HealthFacility,on_delete=models.CASCADE)
-    report_type = models.CharField(max_length=50, choices=REPORT_TYPES)
-    generated_by = models.ForeignKey(User, on_delete=models.PROTECT)
-    generated_at = models.DateTimeField(auto_now_add=True)
-    report_file = models.FileField(upload_to='facility_reports/')
-    parameters = models.JSONField(default=dict)  # Stores report filters/options
-    is_downloaded = models.BooleanField(default=False)
-    
-    class Meta:
-        ordering = ['-generated_at']
 
 class HealthcareW(models.Model):   
  user = models.OneToOneField(
@@ -111,25 +91,3 @@ class HealthcareW(models.Model):
  class Meta:
         db_table = 'healthcare_workers'
         ordering = ['last_name', 'first_name']
-
-class WorkerActivityLog(models.Model): 
-    Action_Choice = [
-        ('created', 'Account Created'),
-        ('activated', 'Account Activated'),
-        ('deactivated', 'Account Deactivated'),
-        ('updated', 'Details Updated'),
-        ('password_changed', 'Password Changed'),
-    ]
-    worker = models.ForeignKey(HealthcareW, on_delete=models.CASCADE, related_name='activity_logs' )
-    action = models.CharField(max_length=20, choices=Action_Choice)
-    performed_by = models.ForeignKey(FacilityAdmin,on_delete=models.SET_NULL,null=True )
-    timestamp = models.DateTimeField(auto_now_add=True)
-    notes = models.TextField(blank=True)
-    
-    class Meta:
-        db_table = 'worker_activity_logs'
-        ordering = ['-timestamp']
-    
-    def __str__(self):
-        return f"{self.worker.get_full_name()} - {self.action} - {self.timestamp}"
-    

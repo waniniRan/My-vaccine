@@ -37,7 +37,7 @@ class HealthFacilitySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = HealthFacility
-        fields = ['id', 'name', 'facility_type', 'location', 'phone', 'email']
+        fields = ['id', 'name', 'facility_type', 'location', 'phone', 'email','admin_id']
         # 'id' is typically included in API responses for unique identification.
 
     def validate_phone(self, value):

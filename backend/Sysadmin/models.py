@@ -96,7 +96,7 @@ class HealthFacility(models.Model):
     is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
-        if not self.pk: #new instances
+        if not self.pk: #new instances   
          with transaction.atomic():
            self.prefix = self._generate_next_prefix()
            self.ID = f"{self.prefix}0001" #facility gets 0001
@@ -178,6 +178,7 @@ class FacilityAdmin(models.Model):
 #END
 
 class SystemActivityLog(models.Model):
+
     """
     Log model to track system administrator activities
     """
@@ -209,3 +210,5 @@ class SystemActivityLog(models.Model):
     
     def __str__(self):
         return f"{self.admin.username} - {self.action} - {self.timestamp}"
+    
+    
