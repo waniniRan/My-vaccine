@@ -16,3 +16,4 @@ class CreateHealthFacility(APIView):
 
       return Response({"message": "Health Facility Creation Failed", "errors": serializer.errors,
                          "status": status.HTTP_400_BAD_REQUEST}, status=status.HTTP_400_BAD_REQUEST)  
+
