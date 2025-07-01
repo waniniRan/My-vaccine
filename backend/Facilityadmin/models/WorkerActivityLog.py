@@ -1,8 +1,8 @@
-from django.db import models, transaction
-from Sysadmin.models import HealthFacility,FacilityAdmin,User
+from django.db import models
+from Sysadmin.models.FacilityAdmin import FacilityAdmin
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from Facilityadmin.models import HealthcareW
+from Facilityadmin.models.HealthcareW import HealthcareW
 
 # Defining the WorkerActivityLog model
 class WorkerActivityLog(models.Model): 

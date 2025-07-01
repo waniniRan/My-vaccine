@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
-from .models import HealthFacility, Vaccine
+from Sysadmin.models.User import User
+from Sysadmin.models.HealthFacility import HealthFacility
+from Sysadmin.models.Vaccine import Vaccine
 
 
 class CustomUserAdmin(UserAdmin):

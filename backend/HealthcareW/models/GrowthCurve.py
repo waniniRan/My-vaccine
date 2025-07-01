@@ -1,10 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from datetime import date
-from Facilityadmin.models import HealthcareW
 from django.core.validators import RegexValidator
-from Sysadmin.models import Vaccine,User
-from HealthcareW.models import Child 
+from HealthcareW.models.Child import Child 
 
 # Defining the GrowthCurve model
 class GrowthCurve(models.Model):

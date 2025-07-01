@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from Sysadmin.models import User
+from Sysadmin.models.User import User
 
 class IsFacilityAdmin(BasePermission):
     def has_permission(self, request, view):

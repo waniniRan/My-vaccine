@@ -1,5 +1,7 @@
 from django.db import models, transaction
-from Sysadmin.models import HealthFacility,FacilityAdmin,User
+from Sysadmin.models.HealthFacility import HealthFacility
+from Sysadmin.models.FacilityAdmin import FacilityAdmin
+from Sysadmin.models.User import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 

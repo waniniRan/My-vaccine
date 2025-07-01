@@ -1,9 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from datetime import date
-from Facilityadmin.models import HealthcareW
+from Facilityadmin.models.HealthcareW import HealthcareW
 from django.core.validators import RegexValidator
-from Sysadmin.models import Vaccine,User
 
 # Desciption of HealthcareWorkerSession model
 class HealthcareWorkerSession(models.Model):

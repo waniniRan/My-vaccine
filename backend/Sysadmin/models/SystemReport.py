@@ -1,8 +1,8 @@
 from django.db import models
 from Sysadmin.models import User
-from django.contrib.auth.models import AbstractUser
-from django.db import transaction
-from django.core.exceptions import ValidationError
+#from django.contrib.auth.models import AbstractUser
+#from django.db import transaction
+#from django.core.exceptions import ValidationError
 
 class SystemReport(models.Model):
     REPORT_TYPES = (

@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from .models import User
+from Sysadmin.models.User import User
 
 
 class IsSystemAdmin(BasePermission):

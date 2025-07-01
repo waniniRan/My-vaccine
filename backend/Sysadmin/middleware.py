@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from .views import SystemReport
+from Sysadmin.models.SystemReport import SystemReport
 from datetime import timezone
 from django.db import models
 

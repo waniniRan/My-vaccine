@@ -1,10 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from datetime import date
-from Facilityadmin.models import HealthcareW
 from django.core.validators import RegexValidator
-from Sysadmin.models import Vaccine,User
-from HealthcareW.models import Child, Appointment, Guardian
+from HealthcareW.models.Guardian import Guardian
 
 # Notification model
 class Notification(models.Model):
@@ -17,7 +15,6 @@ class Notification(models.Model):
         ('MISSED_APPOINTMENT', 'Missed Appointment'),
     ]
     
-    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='notifications')
     guardian = models.ForeignKey(Guardian, on_delete=models.CASCADE)
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
     message = models.TextField()
