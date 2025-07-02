@@ -30,10 +30,10 @@ class Migration(migrations.Migration):
             model_name='growthrecord',
             name='child',
         ),
-       # migrations.RemoveField(
-        #    model_name='growthcurve',
-         #   name='child',
-        #),
+        #migrations.RemoveField(
+          # model_name='growthcurve',
+           #name='child',
+       # ),
         migrations.AlterUniqueTogether(
             name='growthcurve',
             unique_together=None,
