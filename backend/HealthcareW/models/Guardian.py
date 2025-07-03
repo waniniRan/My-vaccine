@@ -17,15 +17,15 @@ class Guardian(models.Model):
         max_length=20, 
         unique=True, 
         validators=[RegexValidator(r'^\d+$', 'National ID must contain only numbers')] )
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    fullname = models.CharField(max_length=200)
     email = models.EmailField()
     phone_number = models.CharField(max_length=15)
-    password = models.CharField(max_length=128)  # Will be hashed
+    temporary_password = models.CharField(max_length=128)  # Will be hashed
+    password_changed = models.BooleanField(default=True)
     date_registered = models.DateTimeField(auto_now_add=True)
     registered_by = models.ForeignKey(HealthcareW, on_delete=models.CASCADE) #Facilityadmin.HealthcareW
     is_active = models.BooleanField(default=True)
     
     
     def __str__(self):
-        return f"{self.first_name} {self.last_name} (ID: {self.national_id})"
+        return f"{self.fullname} (ID: {self.national_id})"

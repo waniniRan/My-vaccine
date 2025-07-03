@@ -22,8 +22,7 @@ class HealthcareW(models.Model):
     ]   
  worker_id= models.CharField(max_length=15, unique=True, primary_key=True)
  worker_username=models.CharField(max_length=100, unique=True)
- first_name= models.CharField(max_length=30)
- last_name=models.CharField(max_length=30)
+ fullname= models.CharField(max_length=200)
  email=models.EmailField(blank=True)
  phone_number= models.CharField(max_length=15, blank=True)
  position= models.CharField(max_length=15, choices=Position_Choice)
@@ -71,12 +70,7 @@ class HealthcareW(models.Model):
                 
         super().save(*args, **kwargs)
 
- @property
- def fullname(self):
-    if self.user:
-        return f"{self.user.first_name} {self.user.last_name}".strip()
-    return ""
-    
+ 
  def __str__(self):
         return f"{self.fullname} - {self.worker_id} ({self.position})"
      
@@ -90,6 +84,3 @@ class HealthcareW(models.Model):
         self.status = 'inactive'
         self.date_left = timezone.now()
         self.save()
- class Meta:
-        db_table = 'healthcare_workers'
-        ordering = ['last_name', 'first_name']

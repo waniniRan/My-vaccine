@@ -20,7 +20,7 @@ class Child(models.Model):
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     birth_weight = models.DecimalField(max_digits=5, decimal_places=2, help_text="Weight in kg")
     birth_height = models.DecimalField(max_digits=5, decimal_places=2, help_text="Height in cm")
-    guardian = models.ForeignKey(Guardian, on_delete=models.CASCADE, related_name='children')
+    national_id = models.ForeignKey(Guardian, on_delete=models.CASCADE, related_name='children')
     registered_by = models.ForeignKey('Facilityadmin.HealthcareW', on_delete=models.CASCADE)
     date_registered = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)

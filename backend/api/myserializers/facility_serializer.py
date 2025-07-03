@@ -27,24 +27,24 @@ class CreateHealthFacilitySerializer(serializers.Serializer):
     
 #Serializer for updating health facility details
 class UpdateHealthFacilitySerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=200, required=False)
-    facility_type = serializers.CharField(max_length=50, required=False)
+   
     location = serializers.CharField(max_length=100, required=False)
     phone = serializers.CharField(max_length=20, required=False)
     email = serializers.EmailField(required=False)
+    
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.facility_type = validated_data.get('facility_type', instance.facility_type)
+       
         instance.location = validated_data.get('location', instance.location)
         instance.phone = validated_data.get('phone', instance.phone)
         instance.email = validated_data.get('email', instance.email)
+       
         instance.save()
         return instance    
 
 # Serializer for reading created health facilities
 class ListHealthFacilitySerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
+    ID = serializers.IntegerField(read_only=True)
     name = serializers.CharField(max_length=200)
     facility_type = serializers.CharField(max_length=50)
     location = serializers.CharField(max_length=100)
