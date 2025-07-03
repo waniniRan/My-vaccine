@@ -1,5 +1,12 @@
 from rest_framework.permissions import BasePermission
 from Sysadmin.models.User import User
+#from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from Sysadmin.models.User import User
+from Sysadmin.models.FacilityAdmin import FacilityAdmin
+from Sysadmin.models.HealthFacility import HealthFacility
 
 
 class IsSystemAdmin(BasePermission):
@@ -76,3 +83,11 @@ class CanManageUsers(BasePermission):
         return False
 
 
+def is_system_admin(user):
+    return user.is_authenticated and user.role == User.Role.SYSTEM_ADMIN
+
+def is_facility_admin(user):
+    return user.is_authenticated and user.role == User.Role.FACILITY_ADMIN
+
+def is_healthcare_worker(user):
+    return user.is_authenticated and user.role == User.Role.WORKER

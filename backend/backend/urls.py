@@ -26,6 +26,8 @@ from Sysadmin.views.vaccine_view import CreateVaccine
 from Sysadmin.views.vaccine_view import UpdateVaccine
 from Sysadmin.views.vaccine_view import ListVaccine 
 
+
+
 urlpatterns = [
     
     path('admin/', admin.site.urls),

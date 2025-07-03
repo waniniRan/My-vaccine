@@ -28,6 +28,9 @@ class FacilityAdmin(models.Model):
     password_changed = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'Systemadmin_FacilityAdmin'
   
     def save(self, *args, **kwargs):
         if not self.pk:  # New instance

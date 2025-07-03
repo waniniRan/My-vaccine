@@ -15,7 +15,7 @@ class GrowthCurve(models.Model):
         ('WEIGHT_HEIGHT', 'Weight for Height'),
     ]
     
-    child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='growth_curves')
+    child_id = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='growth_curves')
     curve_type = models.CharField(max_length=20, choices=CURVE_TYPE_CHOICES)
     percentile = models.DecimalField(max_digits=5, decimal_places=2, help_text="Child's percentile (0-100)")
     z_score = models.DecimalField(max_digits=5, decimal_places=2, help_text="Standard deviation from mean")

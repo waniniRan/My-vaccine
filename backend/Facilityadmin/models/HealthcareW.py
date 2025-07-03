@@ -36,6 +36,9 @@ class HealthcareW(models.Model):
  created_at = models.DateTimeField(auto_now_add=True)
  updated_at = models.DateTimeField(auto_now=True)
  
+ class Meta:
+        db_table = 'Facilityadmin_HealthcareW'
+        
  def save(self, *args, **kwargs):
         if not self.pk and not self.worker_id:
             if not self.facility:
