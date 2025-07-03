@@ -17,6 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path , include
 from Sysadmin.views.facility_view import CreateHealthFacility
+from Sysadmin.views.facility_view import UpdateHealthFacility
+from Sysadmin.views.facility_view import ListHealthFacility
+from Sysadmin.views.facilityadmin_view import CreateFacilityAdmin
+from Sysadmin.views.facilityadmin_view import UpdateFacilityAdmin
+from Sysadmin.views.facilityadmin_view import ListFacilityAdmin
+from Sysadmin.views.vaccine_view import CreateVaccine
+from Sysadmin.views.vaccine_view import UpdateVaccine
+from Sysadmin.views.vaccine_view import ListVaccine 
+
 urlpatterns = [
     
     path('admin/', admin.site.urls),
@@ -24,8 +33,21 @@ urlpatterns = [
     path('api/',include('HealthcareW.urls')),
     path('api/', include('Facilityadmin.urls')),
 
-
+#  URL for Sysadmin app
+    # Include the URL for creating and handling health facilities
      path("create-facility/", CreateHealthFacility.as_view(), name="create_facility"),
+     path("update-facility/", UpdateHealthFacility.as_view(), name="update_facility"),
+     path("list-facilities/", ListHealthFacility.as_view(), name="list_facilities"),
     
+
+    # Include the URL for creating and handling facility admins
+    path("create-facility-admin/", CreateFacilityAdmin.as_view(), name="create_facility_admin"),
+    path("update-facility-admin/", UpdateFacilityAdmin.as_view(), name="update_facility_admin"),
+    path("list-facility-admins/", ListFacilityAdmin.as_view(), name="list_facility_admins"),
+
+    # Include the URL for vaccine management
+    path("create-vaccine/", CreateVaccine.as_view(), name="create_vaccine"),
+    path("update-vaccine/", UpdateVaccine.as_view(), name="update_vaccine"),
+    path("list-vaccines/", ListVaccine.as_view(), name="list_vaccines"),
 ]
 
