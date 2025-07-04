@@ -7,8 +7,8 @@ class CreateVaccinationRecordSerializer(serializers.Serializer):
     child_id = serializers.CharField(Child)
     v_ID = serializers.CharField(Vaccine)
     administered_by = serializers.CharField('Facilityadmin.HealthcareW')
-    side_effects = serializers.TextField(blank=True)
-    remarks= serializers.TextField(blank=True)
+    side_effects = serializers.CharField(max_length=100)
+    remarks= serializers.CharField(max_length=200)
     doseNumber= serializers.IntegerField()
 
     def create(self, validated_data):
@@ -30,7 +30,7 @@ class CreateVaccinationRecordSerializer(serializers.Serializer):
 class UpdateVaccinationRecordSerializer(serializers.Serializer):
    
    
-    remarks= serializers.TextField(blank=True)
+    remarks= serializers.CharField(max_length=200)
    
 
     def update(self, instance, validated_data):
@@ -46,8 +46,8 @@ class ListVaccinationRecordSerializer(serializers.Serializer):
     child_id = serializers.CharField(Child)
     v_ID = serializers.CharField(Vaccine)
     administered_by = serializers.CharField('Facilityadmin.HealthcareW')
-    side_effects = serializers.TextField(blank=True)
-    administrationDate = serializers.DateTimeField(auto_now_add=True)
-    remarks = serializers.TextField(blank=True)
+    side_effects = serializers.CharField(max_length=100)
+    administrationDate = serializers.DateTimeField()
+    remarks = serializers.CharField(max_length=200)
     doseNumber = serializers.IntegerField()                          
 

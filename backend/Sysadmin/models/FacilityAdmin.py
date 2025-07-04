@@ -3,7 +3,7 @@ from django.db import models
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from Sysadmin.models import User
-from Sysadmin.models import HealthFacility
+from Sysadmin.models.HealthFacility import HealthFacility
 
 #Defining the FacilityAdmin model
 class FacilityAdmin(models.Model):

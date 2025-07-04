@@ -3,7 +3,7 @@ from HealthcareW.models import Child, Guardian
 
 # Serializer to create a new child instance
 class CreateChildSerializer(serializers.Serializer):
-    child_id = serializers.CharField(max_length=20, unique=True)
+    child_id = serializers.CharField(max_length=20)
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     date_of_birth = serializers.DateField()
@@ -43,7 +43,7 @@ class UpdateChildSerializer(serializers.Serializer):
     
 # Serializer for listing created child instances
 class ListChildSerializer(serializers.Serializer):
-    child_id = serializers.CharField(max_length=20, unique=True)
+    child_id = serializers.CharField(max_length=20)
     first_name = serializers.CharField(max_length=100)
     last_name = serializers.CharField(max_length=100)
     date_of_birth = serializers.DateField()

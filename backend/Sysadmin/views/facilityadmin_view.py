@@ -3,9 +3,12 @@ from api.myserializers.facilityadmin_serializer import CreateFacilityAdminSerial
 from Sysadmin.models import FacilityAdmin
 from rest_framework.response import Response
 from rest_framework import status
-
+from Sysadmin.views.permissions import IsSystemAdmin,IsSystemAdminOrOwner,CanManageFacilities,CanManageUsers
+from rest_framework.permissions import IsAuthenticated
 # View for creating a new Facility Admin
 class CreateFacilityAdmin(APIView):
+
+    permission_classes = [IsAuthenticated,IsSystemAdmin]   # Adjust permissions as needed
     def post(self, request, *args, **kwargs):
         serializer = CreateFacilityAdminSerializer(data=request.data, context={'request': request})
         

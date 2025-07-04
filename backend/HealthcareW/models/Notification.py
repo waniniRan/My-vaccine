@@ -15,7 +15,7 @@ class Notification(models.Model):
         ('MISSED_APPOINTMENT', 'Missed Appointment'),
     ]
     
-    email = models.ForeignKey(Guardian, on_delete=models.CASCADE, related_name='guardian_email')
+    guardian = models.ForeignKey( 'HealthcareW.Guardian',on_delete=models.CASCADE, related_name='notifications')
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES)
     message = models.TextField()
     is_sent = models.BooleanField(default=False)
@@ -23,4 +23,4 @@ class Notification(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.email.fullname} - {self.get_notification_type_display()}"
+        return f"{self.guardian.fullname} - {self.get_notification_type_display()}"

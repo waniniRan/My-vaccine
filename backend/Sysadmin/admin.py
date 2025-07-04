@@ -85,10 +85,10 @@ class FacilityAdminAdmin(admin.ModelAdmin):
 
 class HealthFacilityAdmin(admin.ModelAdmin):
     """Health Facility Admin with restrictions"""
-    list_display = ('facility_id', 'facility_name', 'location', 'is_active')
+    list_display = ('ID', 'name', 'location', 'is_active')
     list_filter = ('is_active', 'facility_type')
-    search_fields = ('facility_name', 'facility_id', 'location')
-    readonly_fields = ('facility_id', 'prefix', 'created_at', 'updated_at')
+    search_fields = ('name', 'ID', 'location')
+    readonly_fields = ('ID' , 'created_at', 'updated_at')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -117,10 +117,10 @@ class HealthFacilityAdmin(admin.ModelAdmin):
 
 class VaccineAdmin(admin.ModelAdmin):
     """Vaccine Admin - Only System Admin can manage"""
-    list_display = ('vaccine_id', 'vaccine_name', 'vaccine_code', 'vaccine_type', 'status', 'expiry_date')
-    list_filter = ('vaccine_type', 'status', 'manufacturer')
-    search_fields = ('vaccine_name', 'vaccine_code', 'manufacturer')
-    readonly_fields = ('vaccine_id', 'created_at', 'updated_at')
+    list_display = ('v_ID', 'name',  'is_active')
+    list_filter = ('facility', 'is_active')
+    search_fields = ('name', 'v_ID', 'diseasePrevented', 'recommended_age')
+    readonly_fields = ('v_ID', 'created_by', 'updated_at')
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)

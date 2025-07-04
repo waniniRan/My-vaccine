@@ -20,7 +20,7 @@ load_dotenv()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'Immune'),
+        'NAME': os.getenv('DB_NAME', 'immunity'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
@@ -42,18 +42,7 @@ SECRET_KEY = 'django-insecure-l4#j7i==g11521w!j1frfwbdai$+&j&g%9+ab-qc@du#1ke9(w
 DEBUG = True    
 
 ALLOWED_HOSTS = ["*"]
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-        
-    ],
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-    ],
-}
+
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
@@ -82,7 +71,7 @@ INSTALLED_APPS = [
     'Facilityadmin',
     'HealthcareW',
     'django_filters',
-]
+    ]
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -155,12 +144,12 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
+#Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
+#Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -184,12 +173,12 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 6,
 }
 
 # CORS settings (if needed for frontend)
 CORS_ALLOWED_ORIGINS = [
-  #  "http://localhost:3000",  # React default
+   "http://localhost:3000",  # React default
    # "http://127.0.0.1:3000",
    # "http://localhost:8080",  # Vue default
     # Add your frontend URLs here

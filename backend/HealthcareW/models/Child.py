@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import date
 from Facilityadmin.models.HealthcareW import HealthcareW
 from django.core.validators import RegexValidator
-from HealthcareW.models import Guardian
+from HealthcareW.models.Guardian import Guardian
 
 # This is the child model
 # It represents a child in the vaccination system, including personal details and relationships to guardians.

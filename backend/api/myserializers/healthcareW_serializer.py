@@ -4,8 +4,8 @@ from Facilityadmin.models import HealthcareW
 # Serializer to create a new healthcare worker instance
 class CreateHealthcareWSerializer(serializers.Serializer):
     fullname = serializers.CharField(max_length=200)
-    email = serializers.EmailField(required=False, allow_blank=True)
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(max_length=15, required=False)
     position = serializers.CharField(max_length=20)
     facility = serializers.CharField(max_length=100)
 
@@ -30,8 +30,8 @@ class CreateHealthcareWSerializer(serializers.Serializer):
 # Serializer to update an existing healthcare worker instance
 class UpdateHealthcareWSerializer(serializers.Serializer):
     
-    email = serializers.EmailField(required=False, allow_blank=True)
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    email = serializers.EmailField()
+    phone_number = serializers.CharField(max_length=15, required=False)
    
     def update(self, instance, validated_data):
         
@@ -42,10 +42,10 @@ class UpdateHealthcareWSerializer(serializers.Serializer):
     
 # Serializer for listing healthcare worker instances
 class ListHealthcareWSerializer(serializers.Serializer):
-    worker_id = serializers.CharField(max_length=20, unique=True, primary_key=True)
+    worker_id = serializers.CharField(max_length=20,primary_key=True)
     fullname= serializers.CharField(max_length=200)
-    email = serializers.EmailField(required=False, allow_blank=True)
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True)
-    position = serializers.ChoiceField(choices=HealthcareW.Position_Choice)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(max_length=15, required=False)
+    position = serializers.CharField(max_length=20)
     facility = serializers.CharField(max_length=100)
     status = serializers.CharField(max_length=10)

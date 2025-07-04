@@ -3,9 +3,11 @@ from api.myserializers.vaccine_serializer import CreateVaccineSerializer, Update
 from Sysadmin.models.Vaccine import Vaccine
 from rest_framework.response import Response
 from rest_framework import status
-
+from Sysadmin.views.permissions import IsSystemAdmin, IsSystemAdminOrOwner, CanManageFacilities, CanManageUsers 
+from rest_framework.permissions import IsAuthenticated
 #View for creating a new Vaccine
 class CreateVaccine(APIView):
+    permission_classes = [IsAuthenticated,IsSystemAdmin]  # Adjust permissions as needed
     def post(self, request, *args, **kwargs):
         serializer = CreateVaccineSerializer(data=request.data, context={'request': request})
         

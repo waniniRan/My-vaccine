@@ -4,8 +4,8 @@ from Sysadmin.models import User, FacilityAdmin
 #Serializer for creation of Facility admin
 class CreateFacilityAdminSerializer(serializers.Serializer):
     facility = serializers.CharField(max_length=150, required=True)
-    admin_id = serializers.CharField(max_length=15, unique=True, editable=False)
-    admin_username= serializers.CharField(max_length=150, unique=True)
+    admin_id = serializers.CharField(max_length=15)
+    admin_username= serializers.CharField(max_length=150)
     email = serializers.EmailField(required=True)
     fullname= serializers.CharField(max_length=120)
 
@@ -37,12 +37,12 @@ class UpdateFacilityAdminSerializer(serializers.Serializer):
 #Serializer for listing Facility admin
 class ListFacilityAdminSerializer(serializers.Serializer):
     facility = serializers.CharField(max_length=150, required=True)
-    admin_id = serializers.CharField(max_length=15, unique=True, editable=False)
-    admin_username= serializers.CharField(max_length=150, unique=True)
+    admin_id = serializers.CharField(max_length=15)
+    admin_username= serializers.CharField(max_length=150)
     fullname= serializers.CharField(max_length=120)
     email = serializers.EmailField(required=True)
     is_active = serializers.BooleanField(default=True)
-    updated_at = serializers.DateTimeField(auto_now=True)
+    updated_at = serializers.DateTimeField()
 
    #def to_representation(self, instance):
      

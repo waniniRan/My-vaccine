@@ -3,9 +3,11 @@ from api.myserializers.facility_serializer import CreateHealthFacilitySerializer
 from Sysadmin.models import HealthFacility
 from rest_framework.response import Response
 from rest_framework import status
+from Sysadmin.views.permissions import IsSystemAdmin, IsSystemAdminOrOwner, CanManageFacilities, CanManageUsers   
+from rest_framework.permissions import IsAuthenticated
 
 class CreateHealthFacility(APIView):
-
+   permission_classes = [IsAuthenticated,IsSystemAdmin]  # Adjust permissions as needed
    def post(self, request, *args, **kwargs):
       serializer = CreateHealthFacilitySerializer(data=request.data, context={'request': request})
          
@@ -20,6 +22,7 @@ class CreateHealthFacility(APIView):
    
 # View for updating an existing Health Facility
 class UpdateHealthFacility(APIView):
+   
    def put(self, request, *args, **kwargs):
       ID= kwargs.get('ID')
       try:

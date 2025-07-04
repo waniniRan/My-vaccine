@@ -3,10 +3,10 @@ from HealthcareW.models import Guardian
 
 # Serializer for creating a new guardian instance
 class CreateGuardianSerializer(serializers.Serializer):
-    national_id = serializers.CharField(max_length=20, unique=True)
+    national_id = serializers.CharField(max_length=20)
     fullname = serializers.CharField(max_length=200)
     email = serializers.EmailField()
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    phone_number = serializers.CharField(max_length=15, required=False)
 
     def create(self, validated_data):
         national_id = validated_data.pop('national_id')
@@ -23,7 +23,7 @@ class CreateGuardianSerializer(serializers.Serializer):
 class UpdateGuardianSerializer(serializers.Serializer):
    
     email = serializers.EmailField()
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    phone_number = serializers.CharField(max_length=15)
 
     def update(self, instance, validated_data):
         
@@ -34,9 +34,9 @@ class UpdateGuardianSerializer(serializers.Serializer):
     
 # Serializer for listing all guardian instances
 class ListGuardianSerializer(serializers.Serializer):
-    national_id = serializers.CharField(max_length=20, unique=True)
+    national_id = serializers.CharField(max_length=20)
     fullname = serializers.CharField(max_length=200)
     email = serializers.EmailField()
-    phone_number = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    phone_number = serializers.CharField(max_length=15, required=False)
     
     

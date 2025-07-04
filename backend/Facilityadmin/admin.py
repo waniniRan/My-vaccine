@@ -1,49 +1,48 @@
-from django.contrib import admin
-from django.core.exceptions import PermissionDenied
+from django.contrib.admin import AdminSite
 from Facilityadmin.models.HealthcareW import HealthcareW
-from Sysadmin.models.User import User
+from Sysadmin.models.FacilityAdmin import FacilityAdmin
+from HealthcareW.models.Notification import Notification
+from Sysadmin.models import User
 
-# Register your models here.
+class FacilityAdminSite(AdminSite):
+    site_header = "Facility Administration"
+    site_title = "Facility Admin Portal"
+    index_title = "Welcome to the Facility Admin Portal"
+
+    def has_permission(self, request):
+        return request.user.is_active and request.user.groups.filter(name="FacilityAdmin").exists()
+
+facility_admin_site = FacilityAdminSite(name='facilityadmin')
+
+from django.contrib import admin
 
 class HealthcareWorkerAdmin(admin.ModelAdmin):
-    """Healthcare Worker Admin with restrictions"""
+    """
+    Facility admins can manage healthcare workers within their own facility
+    """
     list_display = ('worker_id', 'fullname', 'position', 'facility', 'status')
     list_filter = ('status', 'position', 'facility')
-    
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
-        # Facility admins can only see workers in their facility
-        if hasattr(request.user, 'facility_admin'):
-            return qs.filter(facility=request.user.facility_admin.facility)
-        return qs.none()
-    
+        return qs.filter(facility=request.user.facilityadmin.facility)
+
     def has_add_permission(self, request):
-        # Only facility admins can create healthcare workers
-        return (hasattr(request.user, 'facility_admin') and 
-                request.user.role == User.Role.FACILITY_ADMIN)
-    
+        return (hasattr(request.user, 'facilityadmin') and 
+                request.user.groups.filter(name='FacilityAdmin').exists())
+
     def has_change_permission(self, request, obj=None):
         if request.user.is_superuser:
             return True
-        # Facility admins can edit workers in their facility
-        return (hasattr(request.user, 'facility_admin') and 
-                obj and obj.facility == request.user.facility_admin.facility)
-    
+        return (hasattr(request.user, 'facilityadmin') and 
+                obj and obj.facility == request.user.facilityadmin.facility)
+
     def has_delete_permission(self, request, obj=None):
-        # Facility admins can delete workers in their facility
-        return (hasattr(request.user, 'facility_admin') and 
-                obj and obj.facility == request.user.facility_admin.facility)
-    
-    def save_model(self, request, obj, form, change):
-        if not change:  # New worker
-            if hasattr(request.user, 'facility_admin'):
-                obj.facility = request.user.facility_admin.facility
-                obj.Facility_admin = request.user.facility_admin
-        super().save_model(request, obj, form, change)
+        return self.has_change_permission(request, obj)
 
-
-
-
-admin.site.register(HealthcareW, HealthcareWorkerAdmin)
+facility_admin_site.register(HealthcareW, HealthcareWorkerAdmin)
+facility_admin_site.register(Notification, admin.ModelAdmin)
+facility_admin_site.register(FacilityAdmin, admin.ModelAdmin)
+facility_admin_site.register(User, admin.ModelAdmin)

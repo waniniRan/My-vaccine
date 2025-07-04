@@ -8,7 +8,7 @@ class CreateGrowthRecordSerializer(serializers.Serializer):
     height = serializers.DecimalField(max_digits=5, decimal_places=2, help_text="Height in cm")
     recorded_by = serializers.CharField('Facilityadmin.HealthcareW')
     date_recorded = serializers.DateField()
-    notes = serializers.TextField(blank=True)
+    notes = serializers.CharField(max_length=300)
 
     def create(self, validated_data):
         child_id = validated_data.pop('child_id')
@@ -29,7 +29,7 @@ class UpdateGrowthRecordSerializer(serializers.Serializer):
     
     weight = serializers.DecimalField(max_digits=5, decimal_places=2, help_text="Weight in kg")
     height = serializers.DecimalField(max_digits=5, decimal_places=2, help_text="Height in cm")
-    notes = serializers.TextField(blank=True)
+    notes = serializers.CharField(blank=True)
 
     def update(self, instance, validated_data):
        
@@ -46,4 +46,4 @@ class ListGrowthRecordSerializer(serializers.Serializer):
     height = serializers.DecimalField(max_digits=5, decimal_places=2, help_text="Height in cm")
     recorded_by = serializers.CharField('Facilityadmin.HealthcareW')
     date_recorded = serializers.DateField()
-    notes = serializers.TextField(blank=True)
+    notes = serializers.CharField(max_length=300)

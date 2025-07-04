@@ -5,7 +5,7 @@ from Sysadmin.models import Vaccine
 class CreateVaccineSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     v_ID = serializers.CharField(max_length=10)
-    description = serializers.TextField(blank=True)
+    description = serializers.CharField(max_length=400)
     dosage = serializers.CharField(max_length=50)  # "2 doses", "Single dose", etc.
     diseasePrevented = serializers.CharField(max_length=100)
     recommended_age= serializers.CharField(max_length=20)
@@ -29,7 +29,7 @@ class CreateVaccineSerializer(serializers.Serializer):
 class UpdateVaccineSerializer(serializers.Serializer):
     
     
-    description = serializers.TextField(blank=True)
+    description = serializers.CharField(max_length=400)
     dosage = serializers.CharField(max_length=50)  # "2 doses", "Single dose", etc.
     
 
@@ -45,7 +45,7 @@ class UpdateVaccineSerializer(serializers.Serializer):
 class ListVaccineSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     v_ID = serializers.CharField(max_length=10)
-    description = serializers.CharField(max_length=500, allow_blank=True)
+    description = serializers.CharField(max_length=400)
     dosage = serializers.CharField(max_length=50)  # "2 doses", "Single dose", etc.
     diseasePrevented = serializers.CharField(max_length=100)
     recommended_age = serializers.CharField(max_length=20)

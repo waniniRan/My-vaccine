@@ -3,27 +3,34 @@ from HealthcareW.models import Notification, Guardian
 
 # Serializer for creation of a new notification instance
 class CreateNotificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
     notification_type = serializers.CharField(max_length=20)
-    message = serializers.TextField()
+    message = serializers.CharField(max_length=500)
     is_sent = serializers.BooleanField(default=False)
-    date_sent = serializers.DateTimeField(null=True, blank=True)
+    date_sent = serializers.DateTimeField()
+
+    guardian_email = serializers.EmailField(source='guardian.email',read_only=True)
+
+    def get_guardian_email(self, obj):
+        return obj.guardian.email if obj.guardian else None
+    def create_email(self, validated_data):
+        request = self.context.get('request')
+        guardian=request.user.Guardian
+        return Notification.objects.create(guardian=guardian, **validated_data)
 
     def create(self, validated_data):
-        email = validated_data.pop('email')
         notification_type = validated_data.pop('notification_type')
         message = validated_data.pop('message')
         is_sent = validated_data.pop('is_sent')
         date_sent = validated_data.pop('date_sent')
         
-        Notification = Notification(email=email, notification_type=notification_type, message=message,
+        Notification = Notification(notification_type=notification_type, message=message,
                                 is_sent=is_sent, date_sent=date_sent)
         Notification.save()
         return Notification
 
 #Serializer for updating a created instance 
 class UpdateNotificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    guardian_email = serializers.EmailField()
    
 
     def update(self, instance, validated_data):
@@ -33,8 +40,8 @@ class UpdateNotificationSerializer(serializers.Serializer):
 
 # Serializer for viewing all created instances
 class ListNotificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    guardian_email = serializers.EmailField(source='guardian.email', read_only=True)
     notification_type = serializers.CharField(max_length=20)
-    message = serializers.TextField()
+    message = serializers.CharField(max_length=500)
     is_sent = serializers.BooleanField(default=False)
-    date_sent = serializers.DateTimeField(null=True, blank=True)
+    date_sent = serializers.DateTimeField()

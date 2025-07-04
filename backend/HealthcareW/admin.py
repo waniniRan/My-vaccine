@@ -7,215 +7,56 @@ from HealthcareW.models.VaccinationRecord import VaccinationRecord
 from HealthcareW.models.GrowthRecord import GrowthRecord
 from HealthcareW.models.Notification import Notification
 from Sysadmin.models.User import User
+from django.contrib.admin import AdminSite
 
 # Register your models here.
-class GrowthCurveAdmin(admin.ModelAdmin):
-    """Growth Curve Admin - Only Healthcare Workers can manage"""
-    list_display = ('child_id','curve_type', 'percentile', 'z_score', 'date_calculated', 'is_normal_range')
-    list_filter = ('curve_type', 'is_normal_range', 'date_calculated')
-    search_fields = ('child_id__first_name', 'child_id__last_name', 'curve_type')
-    readonly_fields = ('percentile', 'z_score', 'date_calculated', 'is_normal_range')
-    
+# backend/healthcareworker_admin.py
+
+
+
+class HealthWorkerAdminSite(AdminSite):
+    site_header = "Healthcare Worker Dashboard"
+    site_title = "Healthcare Worker Portal"
+    index_title = "Welcome to the Healthcare Worker Portal"
+
+    def has_permission(self, request):
+        return request.user.is_active and request.user.groups.filter(name='HealthcareWorker').exists()
+
+healthworker_admin_site = HealthWorkerAdminSite(name='healthworker')
+
+from django.contrib import admin
+
+class OwnDataOnlyAdmin(admin.ModelAdmin):
+    """
+    Limits records to objects created by this health worker
+    """
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
-        if hasattr(request.user, 'Worker'):
-            return qs.filter(created_by=request.user)
-        return qs.none()
-    
-    def has_add_permission(self, request):
-        return (hasattr(request.user, 'Worker') and 
-                request.user.role == User.Role.WORKER)
-    
+        return qs.filter(created_by=request.user)
+
+    def has_view_permission(self, request, obj=None):
+        return True
+
     def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
+        if obj:
+            return obj.created_by == request.user
+        return True
+
     def has_delete_permission(self, request, obj=None):
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def save_model(self, request, obj, form, change):
-#Automatically assign the logged-in healthcare worker as the creator."""
-      if not change and hasattr(request.user, 'Worker'):
-        obj.created_by = request.user
-      super().save_model(request, obj, form, change)
+        if obj:
+            return obj.created_by == request.user
+        return True
 
-
-class GuardianAdmin(admin.ModelAdmin):
-    """Guardian Admin - Only Healthcare Workers can manage"""
-    list_display = ('national_id', 'fullname', 'phone_number', 'email')
-    search_fields = ('fullname', 'phone_number', 'email')
-    readonly_fields = ('national_id',)
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'Worker'):
-            return qs.filter(created_by=request.user)
-        return qs.none()
-    
     def has_add_permission(self, request):
-        return (hasattr(request.user, 'Worker') and 
-                request.user.role == User.Role.WORKER)
-    
-    def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def has_delete_permission(self, request, obj=None):
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def save_model(self, request, obj, form, change):
-        """Automatically assign the logged-in healthcare worker as the creator."""
-        if not change and hasattr(request.user, 'Worker'):
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+        return True
 
-class ChildAdmin(admin.ModelAdmin):
-    """Child Admin - Only Healthcare Workers can manage"""
-    list_display = ('child_id', 'first_name', 'last_name', 'national_id', 'date_of_birth')
-    list_filter = ('national_id', 'date_of_birth')
-    search_fields = ('first_name', 'last_name', 'guardian__fullname')
-    readonly_fields = ('child_id', 'national_id')
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'Worker'):
-            return qs.filter(created_by=request.user)
-        return qs.none()
-    def has_add_permission(self, request):
-        return (hasattr(request.user, 'Worker') and 
-                request.user.role == User.Role.WORKER)
-    def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    def has_delete_permission(self, request, obj=None):
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    def save_model(self, request, obj, form, change):
-        """Automatically assign the logged-in healthcare worker as the creator."""
-        if not change and hasattr(request.user, 'Worker'):
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
-
-class VaccinationRecordAdmin(admin.ModelAdmin):
-    """Vaccination Record Admin - Only Healthcare Workers can manage"""
-    list_display = ('child_id', 'v_ID', 'administrationDate', 'doseNumber')
-    list_filter = ('v_ID', 'administrationsDate')
-    search_fields = ('child__first_name', 'child__last_name', 'name')
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'Worker'):
-            return qs.filter(created_by=request.user)
-        return qs.none()
-    
-    def has_add_permission(self, request):
-        return (hasattr(request.user, 'Worker') and 
-                request.user.role == User.Role.WORKER)
-    
-    def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def has_delete_permission(self, request, obj=None):
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def save_model(self, request, obj, form, change):
-        """Automatically assign the logged-in healthcare worker as the creator."""
-        if not change and hasattr(request.user, 'Worker'):
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
-
-class GrowthRecordAdmin(admin.ModelAdmin):
-    """Growth Record Admin - Only Healthcare Workers can manage"""
-    list_display = ('child_id', 'date_recorded', 'weight', 'height')
-    list_filter = ('date_recorded', 'weight', 'height')
-    search_fields = ('child__first_name', 'child__last_name')
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'Worker'):
-            return qs.filter(created_by=request.user)
-        return qs.none()
-    
-    def has_add_permission(self, request):
-        return (hasattr(request.user, 'Worker') and 
-                request.user.role == User.Role.WORKER)
-    
-    def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def has_delete_permission(self, request, obj=None):
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def save_model(self, request, obj, form, change):
-        """Automatically assign the logged-in healthcare worker as the creator."""
-        if not change and hasattr(request.user, 'Worker'):
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
-
-class NotificationAdmin(admin.ModelAdmin):
-    """Notification Admin - Only Healthcare Workers can manage"""
-    list_display = ('notification_type', 'child_id', 'message', 'date_sent')
-    list_filter = ('date_sent',)
-    search_fields = ('child__first_name', 'child__last_name', 'message')
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        if hasattr(request.user, 'Worker'):
-            return qs.filter(created_by=request.user)
-        return qs.none()
-    
-    def has_add_permission(self, request):
-        return (hasattr(request.user, 'Worker') and 
-                request.user.role == User.Role.WORKER)
-    
-    def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser:
-            return True
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def has_delete_permission(self, request, obj=None):
-        return (hasattr(request.user, 'Worker') and 
-                obj and obj.created_by == request.user)
-    
-    def save_model(self, request, obj, form, change):
-        """Automatically assign the logged-in healthcare worker as the creator."""
-        if not change and hasattr(request.user, 'Worker'):
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
-
-# Register the models with their respective admin classes
-admin.site.register(GrowthCurve, GrowthCurveAdmin)  
-admin.site.register(Guardian, GuardianAdmin)
-admin.site.register(Child, ChildAdmin)
-admin.site.register(VaccinationRecord, VaccinationRecordAdmin)
-admin.site.register(GrowthRecord, GrowthRecordAdmin)
-admin.site.register(Notification, NotificationAdmin)
+# register with restricted permissions:
+healthworker_admin_site.register(Guardian, OwnDataOnlyAdmin)
+healthworker_admin_site.register(Child, OwnDataOnlyAdmin)
+healthworker_admin_site.register(GrowthRecord, OwnDataOnlyAdmin)
+healthworker_admin_site.register(GrowthCurve, OwnDataOnlyAdmin)
+healthworker_admin_site.register(VaccinationRecord, OwnDataOnlyAdmin)
+healthworker_admin_site.register(Notification, OwnDataOnlyAdmin)

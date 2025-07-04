@@ -23,7 +23,7 @@ class GrowthCurve(models.Model):
     is_normal_range = models.BooleanField(default=True)
     
     class Meta:
-        unique_together = ['child', 'curve_type', 'date_calculated']
+        unique_together = ['child_id', 'curve_type', 'date_calculated']
     
     def __str__(self):
         return f"{self.child.first_name} - {self.get_curve_type_display()} ({self.percentile}th percentile)"
