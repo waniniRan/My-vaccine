@@ -23,9 +23,9 @@ class CreateVaccine(APIView):
 #View for updating an existing Vaccine
 class UpdateVaccine(APIView):
     def put(self, request, *args, **kwargs):
-        v_id = kwargs.get('v_id')
+        v_ID = kwargs.get('v_ID')
         try:
-            vaccine = Vaccine.objects.get(id=v_id)
+            vaccine = Vaccine.objects.get(v_ID=v_ID)
         except Vaccine.DoesNotExist:
             return Response({"message": "Vaccine not found", "status": status.HTTP_404_NOT_FOUND}, 
                             status=status.HTTP_404_NOT_FOUND)
@@ -49,3 +49,18 @@ class ListVaccine(APIView):
 
         return Response({"message": "Vaccine List Retrieved Successfully", "data": serializer.data,
                          "status": status.HTTP_200_OK})
+    
+class DeleteVaccine(APIView):
+    def delete(self, request, v_ID, *args, **kwargs):
+        try:
+            vaccine = Vaccine.objects.get(v_ID=v_ID)
+            vaccine.delete()
+            return Response({
+                "message": "Vaccine deleted successfully",
+                "status": status.HTTP_200_OK
+            }, status=status.HTTP_200_OK)
+        except Vaccine.DoesNotExist:
+            return Response({
+                "message": "Vaccine not found",
+                "status": status.HTTP_404_NOT_FOUND
+            }, status=status.HTTP_404_NOT_FOUND)  

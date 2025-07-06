@@ -65,7 +65,7 @@ class FacilityAdminAdmin(admin.ModelAdmin):
             return qs
         # Facility admins can only see their own record
         if hasattr(request.user, 'facility_admin'):
-            return qs.filter(id=request.user.facility_admin.id)
+            return qs.filter(id=request.user.facility_admin.Id)
         return qs.none()
     
     def has_add_permission(self, request):
@@ -96,7 +96,7 @@ class HealthFacilityAdmin(admin.ModelAdmin):
             return qs
         # Facility admins can only see their own facility
         if hasattr(request.user, 'facility_admin'):
-            return qs.filter(id=request.user.facility_admin.facility.id)
+            return qs.filter(ID=request.user.facility_admin.facility.ID)
         return qs.none()
     
     def has_add_permission(self, request):
@@ -108,7 +108,7 @@ class HealthFacilityAdmin(admin.ModelAdmin):
             return True
         # Facility admins can edit their own facility
         return (hasattr(request.user, 'facility_admin') and 
-                obj and obj.id == request.user.facility_admin.facility.id)
+                obj and obj.ID == request.user.facility_admin.facility.ID)
     
     def has_delete_permission(self, request, obj=None):
         # Only system admins can delete facilities
@@ -118,9 +118,9 @@ class HealthFacilityAdmin(admin.ModelAdmin):
 class VaccineAdmin(admin.ModelAdmin):
     """Vaccine Admin - Only System Admin can manage"""
     list_display = ('v_ID', 'name',  'is_active')
-    list_filter = ('facility', 'is_active')
+    list_filter = ('is_active','name')
     search_fields = ('name', 'v_ID', 'diseasePrevented', 'recommended_age')
-    readonly_fields = ('v_ID', 'created_by', 'updated_at')
+    readonly_fields = ('v_ID', 'created_at', 'updated_at')
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)

@@ -94,6 +94,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -170,6 +171,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -189,7 +191,7 @@ REST_FRAMEWORK = {
 # CORS settings (if needed for frontend)
 CORS_ALLOWED_ORIGINS = [
    "http://localhost:3000",  # React default
-   # "http://127.0.0.1:3000",
+   "http://127.0.0.1:3000",
    # "http://localhost:8080",  # Vue default
     # Add your frontend URLs here
 ]

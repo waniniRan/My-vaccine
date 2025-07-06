@@ -13,8 +13,6 @@ class Vaccine(models.Model):
     dosage = models.CharField(max_length=50)  # "2 doses", "Single dose", etc.
     diseasePrevented = models.CharField(max_length=100)
     recommended_age= models.CharField(max_length=20)
-    facility = models.ManyToManyField( HealthFacility,related_name='vaccines')
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT,related_name='created_vaccines')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

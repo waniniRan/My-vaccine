@@ -1,17 +1,32 @@
-import React, { useState } from "react";
-import { Container, Table, Offcanvas, ListGroup, Button } from "react-bootstrap";
-import { House, People, PlusSquare, FileText, List, Building, BoxArrowRight } from "react-bootstrap-icons";
+import React, { useState, useEffect } from "react";
+import { Container, Table, Offcanvas, ListGroup, Button, Spinner, Alert } from "react-bootstrap";
+import { House, People, PlusSquare, FileText, List, Building, BoxArrowRight, Download } from "react-bootstrap-icons";
+import reportService from "../../services/reportService";
 
 const SystemReportsPage = () => {
   const [showMenu, setShowMenu] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleCloseMenu = () => setShowMenu(false);
   const handleShowMenu = () => setShowMenu(true);
 
-  const reports = [
-    { id: 1, name: "System Audit Report", date: "2025-07-01" },
-    { id: 2, name: "User Activity Report", date: "2025-07-02" },
-  ];
+  useEffect(() => {
+    const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const data = await reportService.getSystemReports();
+      setReports(data); // or data.data depending on your Django response
+    } catch (err) {
+      console.error(err);
+      setError("Could not fetch reports");
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchReports();
+  }, []);
 
   return (
     <>
@@ -40,23 +55,41 @@ const SystemReportsPage = () => {
       </div>
 
       <Container className="py-4">
-        <h4>Available Reports</h4>
-        <Table bordered hover>
-          <thead>
-            <tr>
-              <th>Report Name</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reports.map((r) => (
-              <tr key={r.id}>
-                <td>{r.name}</td>
-                <td>{r.date}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        {error && <Alert variant="danger">{error}</Alert>}
+        {loading ? (
+          <div className="text-center"><Spinner animation="border" /></div>
+        ) : (
+          <>
+            <h4>Available Reports</h4>
+            <Table bordered hover>
+              <thead>
+                <tr>
+                  <th>Report Name</th>
+                  <th>Date</th>
+                  <th>Download</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((r) => (
+                  <tr key={r.id}>
+                    <td>{r.name}</td>
+                    <td>{r.date}</td>
+                    <td>
+                      <a
+                        href={r.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary btn-sm"
+                      >
+                        <Download /> Download
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </>
+        )}
       </Container>
     </>
   );

@@ -1,112 +1,260 @@
-import React, { useState } from "react";
-import { Container, Table, Button, Modal, Form, Offcanvas, ListGroup } from "react-bootstrap";
-import { House, People, PlusSquare, FileText, List, Building,BoxArrowRight } from "react-bootstrap-icons";
+import React, { useEffect, useState } from "react";
+import {
+  Container,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Offcanvas,
+  ListGroup,
+  Alert,
+} from "react-bootstrap";
+import {
+  House,
+  People,
+  PlusSquare,
+  FileText,
+  List,
+  Building,
+  BoxArrowRight,
+  PencilSquare,
+  Trash,
+} from "react-bootstrap-icons";
+import vaccineService from "../../services/vaccineService";
 
 const VaccinesPage = () => {
   const [showMenu, setShowMenu] = useState(false);
+  const [vaccines, setVaccines] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [editModal, setEditModal] = useState(false);
+  const [editingVaccine, setEditingVaccine] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleCloseMenu = () => setShowMenu(false);
-  const handleShowMenu = () => setShowMenu(true);
+  const [form, setForm] = useState({
+    name: "",
+    v_ID: "",
+    description: "",
+    dosage: "",
+    diseasePrevented: "",
+    recommended_age: "",
+  });
 
-  const [vaccines, setVaccines] = useState([
-    { id: 1, name: "BCG", disease: "Tuberculosis", schedule: "At birth" },
-    { id: 2, name: "OPV", disease: "Polio", schedule: "6, 10, 14 weeks" }
-  ]);
+  const loadVaccines = async () => {
+    try {
+      const res = await vaccineService.getVaccines();
+      setVaccines(res.data.data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load vaccines");
+    }
+  };
 
-  const [form, setForm] = useState({ name: "", disease: "", schedule: "" });
+  useEffect(() => {
+    loadVaccines();
+  }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setVaccines([...vaccines, { ...form, id: vaccines.length + 1 }]);
-    setShowModal(false);
+    try {
+      await vaccineService.createVaccine(form);
+      setSuccess("Vaccine created successfully");
+      setShowModal(false);
+      setForm({
+        name: "",
+        v_ID: "",
+        description: "",
+        dosage: "",
+        diseasePrevented: "",
+        recommended_age: "",
+      });
+      loadVaccines();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create vaccine");
+    }
+  };
+
+  const handleEdit = (vaccine) => {
+    setEditingVaccine(vaccine);
+    setForm({
+      name: vaccine.name,
+      v_ID: vaccine.v_ID,
+      description: vaccine.description,
+      dosage: vaccine.dosage,
+      diseasePrevented: vaccine.diseasePrevented,
+      recommended_age: vaccine.recommended_age,
+    });
+    setEditModal(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await vaccineService.updateVaccine(editingVaccine.v_ID, {
+        description: form.description,
+        dosage: form.dosage,
+      });
+      setSuccess("Vaccine updated successfully");
+      setEditModal(false);
+      loadVaccines();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update vaccine");
+    }
+  };
+
+  const handleDelete = async (v_ID) => {
+    if (!window.confirm("Are you sure you want to delete this vaccine?")) return;
+    try {
+      await vaccineService.deleteVaccine(v_ID);
+      setSuccess("Vaccine deleted successfully");
+      loadVaccines();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete vaccine");
+    }
   };
 
   return (
     <>
-      <Offcanvas show={showMenu} onHide={handleCloseMenu}>
+      <Offcanvas show={showMenu} onHide={() => setShowMenu(false)}>
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Menu</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
           <ListGroup variant="flush">
-            <ListGroup.Item action href="/system-admin/dashboard"><House /> Home</ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/facilities"><Building /> Facilities</ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/facility-admins"><People /> Facility Admins</ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/vaccines"><PlusSquare /> Vaccines</ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/reports"><FileText /> System Reports</ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/all-users"><List /> All Users</ListGroup.Item>
-            <ListGroup.Item action href="/"><BoxArrowRight /> Logout</ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/dashboard">
+              <House /> Home
+            </ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/facilities">
+              <Building /> Facilities
+            </ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/facility-admins">
+              <People /> Facility Admins
+            </ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/vaccines">
+              <PlusSquare /> Vaccines
+            </ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/reports">
+              <FileText /> System Reports
+            </ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/all-users">
+              <List /> All Users
+            </ListGroup.Item>
+            <ListGroup.Item action href="/">
+              <BoxArrowRight /> Logout
+            </ListGroup.Item>
           </ListGroup>
         </Offcanvas.Body>
       </Offcanvas>
 
-      {/* header */}
       <div className="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
         <h3 className="mb-0">Manage Vaccines</h3>
-        <Button variant="light" onClick={handleShowMenu}>
+        <Button variant="light" onClick={() => setShowMenu(true)}>
           <span className="me-1">&#9776;</span> Menu
         </Button>
       </div>
 
       <Container className="py-4">
+        {error && <Alert variant="danger">{error}</Alert>}
+        {success && <Alert variant="success">{success}</Alert>}
+
         <div className="d-flex justify-content-between mb-3">
-          <h4>Vaccine Catalog</h4>
+          <h4>Vaccines List</h4>
           <Button onClick={() => setShowModal(true)}>Add Vaccine</Button>
         </div>
 
         <Table bordered hover>
           <thead>
             <tr>
+              <th>ID</th>
               <th>Name</th>
-              <th>Disease</th>
-              <th>Schedule</th>
+              <th>Disease Prevented</th>
+              <th>Dosage</th>
+              <th>Recommended Age</th>
+              <th>Description</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {vaccines.map((v) => (
-              <tr key={v.id}>
+              <tr key={v.v_ID}>
+                <td>{v.v_ID}</td>
                 <td>{v.name}</td>
-                <td>{v.disease}</td>
-                <td>{v.schedule}</td>
+                <td>{v.diseasePrevented}</td>
+                <td>{v.dosage}</td>
+                <td>{v.recommended_age}</td>
+                <td>{v.description}</td>
+                <td>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="me-2"
+                    onClick={() => handleEdit(v)}
+                  >
+                    <PencilSquare />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => handleDelete(v.v_ID)}
+                  >
+                    <Trash />
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
         </Table>
       </Container>
 
-      {/* modal */}
+      {/* create modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Add Vaccine</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
+            {["name", "v_ID", "description", "dosage", "diseasePrevented", "recommended_age"].map((field) => (
+              <Form.Group key={field} className="mb-2">
+                <Form.Label>{field.replace("_", " ").toUpperCase()}</Form.Label>
+                <Form.Control
+                  value={form[field]}
+                  onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                  required
+                />
+              </Form.Group>
+            ))}
+            <Button type="submit" variant="primary">Save</Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* edit modal */}
+      <Modal show={editModal} onHide={() => setEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Vaccine</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleUpdate}>
             <Form.Group className="mb-2">
-              <Form.Label>Name</Form.Label>
+              <Form.Label>Description</Form.Label>
               <Form.Control
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
                 required
               />
             </Form.Group>
             <Form.Group className="mb-2">
-              <Form.Label>Disease</Form.Label>
+              <Form.Label>Dosage</Form.Label>
               <Form.Control
-                value={form.disease}
-                onChange={(e) => setForm({ ...form, disease: e.target.value })}
+                value={form.dosage}
+                onChange={(e) => setForm({ ...form, dosage: e.target.value })}
                 required
               />
             </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Schedule</Form.Label>
-              <Form.Control
-                value={form.schedule}
-                onChange={(e) => setForm({ ...form, schedule: e.target.value })}
-                required
-              />
-            </Form.Group>
-            <Button type="submit" variant="primary">Save Vaccine</Button>
+            <Button type="submit" variant="primary">Update</Button>
           </Form>
         </Modal.Body>
       </Modal>

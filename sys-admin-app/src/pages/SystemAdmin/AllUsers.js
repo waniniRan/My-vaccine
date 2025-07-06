@@ -1,17 +1,34 @@
-import React, { useState } from "react";
-import { Container, Table, Offcanvas, ListGroup, Button } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Container, Table, Offcanvas, ListGroup, Button, Spinner, Alert } from "react-bootstrap";
 import { House, People, PlusSquare, FileText, List, Building, BoxArrowRight } from "react-bootstrap-icons";
+import userService from "../../services/userService"; // Adjust the import path as needed 
+
 
 const AllUsersPage = () => {
   const [showMenu, setShowMenu] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleCloseMenu = () => setShowMenu(false);
   const handleShowMenu = () => setShowMenu(true);
 
-  const users = [
-    { id: 1, name: "Jane Doe", role: "Facility Admin", email: "jane@health.org" },
-    { id: 2, name: "John Smith", role: "Healthcare Worker", email: "john@clinic.org" },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await userService.getAllUsers();
+      setUsers(data); // or data.data if your backend wraps it
+    } catch (err) {
+      console.error(err);
+      setError("Could not load users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+    fetchUsers();
+  }, []);
 
   return (
     <>
@@ -40,25 +57,32 @@ const AllUsersPage = () => {
       </div>
 
       <Container className="py-4">
-        <h4>Registered Users</h4>
-        <Table bordered hover>
-          <thead>
-            <tr>
-              <th>Full Name</th>
-              <th>Role</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.name}</td>
-                <td>{u.role}</td>
-                <td>{u.email}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        {error && <Alert variant="danger">{error}</Alert>}
+        {loading ? (
+          <div className="text-center"><Spinner animation="border" /></div>
+        ) : (
+          <>
+            <h4>Registered Users</h4>
+            <Table bordered hover>
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Role</th>
+                  <th>Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.name}</td>
+                    <td>{u.role}</td>
+                    <td>{u.email}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </>
+        )}
       </Container>
     </>
   );

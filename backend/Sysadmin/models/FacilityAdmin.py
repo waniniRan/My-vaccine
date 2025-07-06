@@ -15,13 +15,7 @@ class FacilityAdmin(models.Model):
     admin_id = models.CharField(max_length=15, unique=True, editable=False)
     fullname= models.CharField(max_length=120)
     email = models.EmailField()
-    facility = models.OneToOneField(HealthFacility, on_delete=models.CASCADE)
-    ID=models.ForeignKey(
-        HealthFacility,
-        on_delete=models.CASCADE,
-        related_name='facility_admins',
-        limit_choices_to={'is_active': True}
-    )
+    facility = models.OneToOneField(HealthFacility, on_delete=models.CASCADE, to_field='ID', db_column='facility_id')
     admin_username=models.CharField(max_length=150, unique=True)
     is_active=models.BooleanField(default=True)
     temporary_password = models.CharField(max_length=128)

@@ -13,7 +13,7 @@ class HealthFacility(models.Model):
         ('HEALTH_CENTER', 'Health Center'),
     )
     prefix=models.CharField(max_length=1, unique=True, editable=False) #eg., K , M
-    ID = models.CharField(max_length=15, unique=True, editable=False)
+    ID = models.CharField(primary_key=True,max_length=15, unique=True, editable=False)
     name = models.CharField(max_length=200)
     facility_type = models.CharField(max_length=50, choices=FACILITY_TYPES)
     location = models.CharField(max_length=100)
@@ -23,7 +23,9 @@ class HealthFacility(models.Model):
         User,
         on_delete=models.PROTECT,
         related_name='managed_facility',
-        limit_choices_to={'role': User.Role.FACILITY_ADMIN}
+        limit_choices_to={'role': User.Role.FACILITY_ADMIN},
+        null=True,
+        blank=True
     )
     created_by = models.ForeignKey(
         User,

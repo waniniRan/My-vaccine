@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from api.myserializers.facilityadmin_serializer import CreateFacilityAdminSerializer, UpdateFacilityAdminSerializer, ListFacilityAdminSerializer
-from Sysadmin.models import FacilityAdmin
+from Sysadmin.models.FacilityAdmin import FacilityAdmin
 from rest_framework.response import Response
 from rest_framework import status
 from Sysadmin.views.permissions import IsSystemAdmin,IsSystemAdminOrOwner,CanManageFacilities,CanManageUsers
@@ -49,3 +49,19 @@ class ListFacilityAdmin(APIView):
 
         return Response({"message": "Facility Admin List Retrieved Successfully", "data": serializer.data,
                          "status": status.HTTP_200_OK})
+
+class DeleteFacilityAdmin(APIView):
+    def delete(self, request, admin_id, *args, **kwargs):
+        try:
+            admin = FacilityAdmin.objects.get(admin_id=admin_id)
+            admin.delete()
+            return Response({
+                "message": "Facility Admin deleted successfully",
+                "status": status.HTTP_200_OK
+            }, status=status.HTTP_200_OK)
+        except FacilityAdmin.DoesNotExist:
+            return Response({
+                "message": "Facility Admin not found",
+                "status": status.HTTP_404_NOT_FOUND
+            }, status=status.HTTP_404_NOT_FOUND)
+

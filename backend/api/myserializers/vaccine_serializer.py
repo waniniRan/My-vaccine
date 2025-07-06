@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Sysadmin.models import Vaccine
+from Sysadmin.models.Vaccine import Vaccine
 
 #Create a serializer for the Vaccine model
 class CreateVaccineSerializer(serializers.Serializer):
@@ -19,11 +19,15 @@ class CreateVaccineSerializer(serializers.Serializer):
         diseasePrevented = validated_data.pop('diseasePrevented')
         recommended_age = validated_data.pop('recommended_age')
         
-        Vaccine = Vaccine(name=name, v_ID=v_ID, description=description, 
-                          dosage=dosage, diseasePrevented=diseasePrevented, 
-                          recommended_age=recommended_age)
-        Vaccine.save()
-        return Vaccine
+        list = Vaccine(name=name, 
+                          v_ID=v_ID, 
+                          description=description, 
+                          dosage=dosage, 
+                          diseasePrevented=diseasePrevented, 
+                          recommended_age=recommended_age
+                         )
+        list.save()
+        return list
     
 # Serializer for updating vaccine details
 class UpdateVaccineSerializer(serializers.Serializer):
