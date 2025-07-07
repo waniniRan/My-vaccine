@@ -26,7 +26,7 @@ class HealthcareW(models.Model):
  email=models.EmailField(blank=True)
  phone_number= models.CharField(max_length=15, blank=True)
  position= models.CharField(max_length=15, choices=Position_Choice)
- facility= models.ForeignKey(HealthFacility, on_delete=models.CASCADE, related_name='workers')
+ facility= models.ForeignKey(HealthFacility, on_delete=models.CASCADE, to_field='ID',db_column='facility_id')
  Facility_admin= models.ForeignKey(FacilityAdmin, on_delete=models.CASCADE, related_name='managed_workers')
  temporary_password= models.CharField(max_length=120)
  password_changed= models.BooleanField(default=False)

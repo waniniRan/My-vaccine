@@ -17,6 +17,8 @@ import FacilityAdminLogin from "./pages/FacilityAdmin/Login";
 import FacilityAdminDashboard from "./pages/FacilityAdmin/Dashboard";
 import HealthcareWorkersPage from "./pages/FacilityAdmin/HealthcareWorkers";
 import FacilityReportsPage from "./pages/FacilityAdmin/FacilityReports";
+import ChangePassword from "./pages/FacilityAdmin/changePassword";
+
 
 //Healthcare Worker Pages
 import HealthcareWorkerLogin from "./pages/HealthcareWorker/Login";
@@ -46,7 +48,9 @@ function App() {
         <Route path="/facility-admin/dashboard" element={<FacilityAdminDashboard />} />
         <Route path="/facility-admin/healthcare-workers" element={<HealthcareWorkersPage />} />
         <Route path="/facility-admin/reports" element={<FacilityReportsPage />} />
-        
+        <Route path="/facility-admin/change-password" element={<ChangePassword />} />
+
+
 
         {/*Hea}lthcare Worker Routes */}
         <Route path="/healthcare-worker/login" element={<HealthcareWorkerLogin />} />

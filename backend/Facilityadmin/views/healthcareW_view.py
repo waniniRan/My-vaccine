@@ -1,22 +1,30 @@
 from rest_framework.views import APIView
 from api.myserializers.healthcareW_serializer import CreateHealthcareWSerializer, UpdateHealthcareWSerializer, ListHealthcareWSerializer
-from Facilityadmin.models import HealthcareW
+from Facilityadmin.models.HealthcareW import HealthcareW
 from rest_framework.response import Response
 from rest_framework import status
-
+from rest_framework.permissions import IsAuthenticated
 # View for creating a new Healthcare Worker
 class CreateHealthcareW(APIView):
     def post(self, request, *args, **kwargs):
+        print("DEBUG: incoming data →", request.data)   # 👈 guaranteed to print
         serializer = CreateHealthcareWSerializer(data=request.data, context={'request': request})
-        
-        if serializer.is_valid(): 
-            serializer.save()
+        if serializer.is_valid():
+           print("DEBUG: valid →", serializer.validated_data)  # 👈
+           serializer.save()
+           return Response({
+            "message": "Healthcare Worker Creation Successful",
+            "data": serializer.data,
+            "status": status.HTTP_201_CREATED
+        }, status=status.HTTP_201_CREATED)
+        else:
+          print("DEBUG: errors →", serializer.errors)   # 👈
+          return Response({
+            "message": "Healthcare Worker Creation Failed",
+            "errors": serializer.errors,
+            "status": status.HTTP_400_BAD_REQUEST
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"message": "Healthcare Worker Creation Successful", "data": serializer.data,
-                             "status": status.HTTP_201_CREATED}, status=status.HTTP_201_CREATED)
-
-        return Response({"message": "Healthcare Worker Creation Failed", "errors": serializer.errors,
-                         "status": status.HTTP_400_BAD_REQUEST}, status=status.HTTP_400_BAD_REQUEST)
     
 # View for updating an existing Healthcare Worker
 class UpdateHealthcareW(APIView):
@@ -46,3 +54,13 @@ class ListHealthcareW(APIView):
 
         return Response({"message": "Healthcare Worker List Retrieved Successfully", "data": serializer.data,
                          "status": status.HTTP_200_OK})
+
+class DeleteHealthcareW(APIView):
+    permission_classes = [IsAuthenticated]  # optional
+    def delete(self, request, worker_id, *args, **kwargs):
+        try:
+            worker = HealthcareW.objects.get(worker_id=worker_id)
+            worker.delete()
+            return Response({"message": "Deleted"}, status=status.HTTP_200_OK)
+        except HealthcareW.DoesNotExist:
+            return Response({"message": "Worker not found"}, status=status.HTTP_404_NOT_FOUND)

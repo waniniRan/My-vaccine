@@ -25,6 +25,8 @@ from Sysadmin.views.vaccine_view import (
 from Sysadmin.views.user_view import UserListsView
 from Sysadmin.views.report_view import SystemReportsView
 from Sysadmin.views.activity_view import SystemActivityLogAPIView
+from Sysadmin.views.facility_admin_auth import facility_admin_login
+from Sysadmin.views.facility_admin_auth import facility_admin_change_password 
 
 app_name = "Sysadmin"
 
@@ -40,6 +42,10 @@ urlpatterns = [
     path("update-facility-admin/<str:admin_id>/", UpdateFacilityAdmin.as_view(), name="update_facility_admin"),
     path("list-facility-admins/", ListFacilityAdmin.as_view(), name="list_facility_admins"),
     path("delete-facility-admin/<str:admin_id>/", DeleteFacilityAdmin.as_view(), name="delete_facility_admin"),
+    path("facility-admin-login/", facility_admin_login),
+    path("facility-admin-change-password/", facility_admin_change_password),
+
+
 
     # Vaccines
     path("create-vaccine/", CreateVaccine.as_view(), name="create_vaccine"),
@@ -48,9 +54,9 @@ urlpatterns = [
     path("delete-vaccine/<str:v_ID>/", DeleteVaccine.as_view(), name="delete-vaccine"),
 
     # System Admin APIs
-    path("api/users/", UserListsView.as_view(), name="user-list"),
+    path("users/", UserListsView.as_view(), name="user-list"),
     path("system-reports/", SystemReportsView.as_view(), name="system-report-list"),
-    path("api/system-activity-logs/", SystemActivityLogAPIView.as_view(), name="system-activity-log-list"),
+    path("system-activity-logs/", SystemActivityLogAPIView.as_view(), name="system-activity-log-list"),
 ]
 
 

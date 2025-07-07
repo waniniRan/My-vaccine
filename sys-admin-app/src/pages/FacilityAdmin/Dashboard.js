@@ -1,25 +1,69 @@
-import React, { useState } from "react";
-import { Container, Row, Col, Card, Table, Button, Offcanvas, ListGroup } from "react-bootstrap";
-import { House, People, FileText,BoxArrowRight } from "react-bootstrap-icons";
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Table,
+  Button,
+  Offcanvas,
+  ListGroup,
+  Spinner,
+  Alert,
+} from "react-bootstrap";
+import {
+  House,
+  People,
+  FileText,
+  BoxArrowRight,
+} from "react-bootstrap-icons";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const FacilityAdminDashboard = () => {
   const [showMenu, setShowMenu] = useState(false);
+  const [workers, setWorkers] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleShowMenu = () => setShowMenu(true);
   const handleCloseMenu = () => setShowMenu(false);
 
-  // mock data
-  const workers = [
-    { id: "A0001", name: "Dr. Sarah Johnson", status: "Active", lastLogin: "2025-07-05 09:30" },
-    { id: "A0002", name: "Nurse Mike Chen", status: "Active", lastLogin: "2025-07-05 08:45" },
-    { id: "A0002", name: "Dr. Emily Rodriguez", status: "Offline", lastLogin: "2025-07-04 17:20" }
-  ];
-
   const handleLogout = () => {
+    localStorage.removeItem("accessToken");
     navigate("/facility-admin/login");
   };
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      const workersRes = await axios.get(
+        "http://127.0.0.1:8000/api/facilityadmin/list-healthcare-workers/",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const reportsRes = await axios.get(
+        "http://127.0.0.1:8000/api/facilityadmin/list-facility-reports/",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setWorkers(workersRes.data.data);
+      setReports(reportsRes.data);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load dashboard data.");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   return (
     <>
@@ -29,70 +73,98 @@ const FacilityAdminDashboard = () => {
         </Offcanvas.Header>
         <Offcanvas.Body>
           <ListGroup variant="flush">
-            <ListGroup.Item action href="/facility-admin/dashboard"><House /> Home</ListGroup.Item>
-            <ListGroup.Item action href="/facility-admin/healthcare-workers"><People /> Healthcare Workers</ListGroup.Item>
-            <ListGroup.Item action href="/facility-admin/reports"><FileText /> Facility Reports</ListGroup.Item>
-            <ListGroup.Item action onClick={handleLogout}><BoxArrowRight /> Logout</ListGroup.Item>
+            <ListGroup.Item action href="/facility-admin/dashboard">
+              <House /> Home
+            </ListGroup.Item>
+            <ListGroup.Item action href="/facility-admin/healthcare-workers">
+              <People /> Healthcare Workers
+            </ListGroup.Item>
+            <ListGroup.Item action href="/facility-admin/reports">
+              <FileText /> Facility Reports
+            </ListGroup.Item>
+            <ListGroup.Item action onClick={handleLogout}>
+              <BoxArrowRight /> Logout
+            </ListGroup.Item>
           </ListGroup>
         </Offcanvas.Body>
       </Offcanvas>
 
       <div className="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
-        <h3 className="mb-0">Facility Information Dashboard</h3>
+        <h3>Facility Admin Dashboard</h3>
         <Button variant="light" onClick={handleShowMenu}>
-          <span className="me-1">&#9776;</span> Menu
+          &#9776; Menu
         </Button>
       </div>
 
       <Container className="py-4">
-        <Row className="mb-3">
-          <Col md={6}>
-            <Card>
-              <Card.Body>
-                <Card.Title>Total Healthcare Workers</Card.Title>
-                <Card.Text>40</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={6}>
-            <Card>
-              <Card.Body>
-                <Card.Title>Active Today</Card.Title>
-                <Card.Text>32</Card.Text>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+        {loading && (
+          <div className="text-center py-5">
+            <Spinner animation="border" />
+          </div>
+        )}
+        {error && <Alert variant="danger">{error}</Alert>}
 
-        <Card>
-          <Card.Header>Healthcare Workers</Card.Header>
-          <Card.Body>
-            <Table striped hover>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>ID</th>
-                  <th>Status</th>
-                  <th>Last Login</th>
-                </tr>
-              </thead>
-              <tbody>
-                {workers.map((w) => (
-                  <tr key={w.id}>
-                    <td>{w.name}</td>
-                    <td>{w.id}</td>
-                    <td>
-                      <span className={`badge ${w.status === "Active" ? "bg-success" : "bg-secondary"}`}>
-                        {w.status}
-                      </span>
-                    </td>
-                    <td>{w.lastLogin}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Card.Body>
-        </Card>
+        {!loading && !error && (
+          <>
+            <Row className="mb-4">
+              <Col md={6}>
+                <Card>
+                  <Card.Body>
+                    <Card.Title>Total Healthcare Workers</Card.Title>
+                    <h2>{workers.length}</h2>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={6}>
+                <Card>
+                  <Card.Body>
+                    <Card.Title>Total Reports</Card.Title>
+                    <h2>{reports.length}</h2>
+                  </Card.Body>
+                </Card>
+              </Col>
+            </Row>
+
+            <Card>
+              <Card.Header>Recent Reports</Card.Header>
+              <Card.Body>
+                {reports.length === 0 ? (
+                  <p>No reports available.</p>
+                ) : (
+                  <Table hover>
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Generated By</th>
+                        <th>Date</th>
+                        <th>Download</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reports.slice(0, 5).map((r) => (
+                        <tr key={r.id}>
+                          <td>{r.report_type}</td>
+                          <td>{r.generated_by}</td>
+                          <td>{new Date(r.generated_at).toLocaleDateString()}</td>
+                          <td>
+                            <a
+                              href={r.report_file}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-sm btn-outline-primary"
+                            >
+                              Download
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
+              </Card.Body>
+            </Card>
+          </>
+        )}
       </Container>
     </>
   );
