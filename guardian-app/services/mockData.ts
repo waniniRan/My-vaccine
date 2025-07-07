@@ -2,18 +2,18 @@ import { Child, VaccinationRecord, GrowthRecord, Notification, Vaccine, Guardian
 
 // Mock data for read-only app
 export const mockGuardian: Guardian = {
-  national_id: "123456789",
-  fullname:"Sarah Johnson",
-  phone_number: "+1234567890",
-  email: "sarah.johnson@email.com",
-  address: "123 Main St, City, State 12345"
+  national_id: "11374442",
+  fullname:"Mary Wanjiru",
+  phone_number: "25471256789085",
+  email: "mary.Wanjiru@gmail.com",
+  address: "4217, Nairobi, Kenya",
 };
 
 export const mockChildren: Child[] = [
   {
     child_id: "C001",
-    first_name: "Emma",
-    last_name: "Johnson",
+    first_name: " James",
+    last_name: "Mwangi",
     date_of_birth: "2022-03-15",
     gender: "F",
     birth_weight: 3.2,
@@ -27,8 +27,8 @@ export const mockChildren: Child[] = [
   },
   {
     child_id: "C002",
-    first_name: "Liam",
-    last_name: "Johnson",
+    first_name: "Agnes",
+    last_name: "Wamaya",
     date_of_birth: "2020-08-10",
     gender: "M",
     birth_weight: 3.5,

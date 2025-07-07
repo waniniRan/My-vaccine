@@ -64,7 +64,7 @@ const HealthcareWorkerDashboard = () => {
             <Card className="mb-3">
               <Card.Body>
                 <Card.Title>Total Guardians</Card.Title>
-                <h2>25</h2>
+                <h2>2</h2>
               </Card.Body>
             </Card>
           </Col>
@@ -72,7 +72,7 @@ const HealthcareWorkerDashboard = () => {
             <Card className="mb-3">
               <Card.Body>
                 <Card.Title>Total Children</Card.Title>
-                <h2>40</h2>
+                <h2>4</h2>
               </Card.Body>
             </Card>
           </Col>
