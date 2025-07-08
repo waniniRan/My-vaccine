@@ -23,6 +23,7 @@ class CreateFacilityAdmin(APIView):
     
 # View for updating an existing Facility Admin
 class UpdateFacilityAdmin(APIView):
+    permission_classes = [IsAuthenticated,IsSystemAdminOrOwner]  # Adjust permissions as needed
     def put(self, request, *args, **kwargs):
         admin_id = kwargs.get('admin_id')
         try:
@@ -43,14 +44,16 @@ class UpdateFacilityAdmin(APIView):
     
 # View for listing all Facility Admins
 class ListFacilityAdmin(APIView):
+    permission_classes = [IsAuthenticated,CanManageUsers]  # Adjust permissions as needed
     def get(self, request):
-        facility_admins = FacilityAdmin.objects.all()
-        serializer = ListFacilityAdminSerializer(facility_admins, many=True)
-
-        return Response({"message": "Facility Admin List Retrieved Successfully", "data": serializer.data,
-                         "status": status.HTTP_200_OK})
+        admins = FacilityAdmin.objects.all()
+        if not admins.exists():
+            return Response({'data': []}, status=200)
+        serializer = ListFacilityAdminSerializer(admins, many=True)
+        return Response({'data': serializer.data}, status=200)
 
 class DeleteFacilityAdmin(APIView):
+    permission_classes = [IsAuthenticated,IsSystemAdmin]  # Adjust permissions as needed
     def delete(self, request, admin_id, *args, **kwargs):
         try:
             admin = FacilityAdmin.objects.get(admin_id=admin_id)

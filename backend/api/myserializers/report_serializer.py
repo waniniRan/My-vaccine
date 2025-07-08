@@ -6,11 +6,12 @@ from Sysadmin.models.SystemReport import SystemReport
 class SystemReportListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     report_type = serializers.CharField()
-    generated_by = serializers.CharField()
     generated_at = serializers.DateTimeField()
-    download_url = serializers.CharField()
+    generated_by = serializers.CharField()
+    download_url = serializers.SerializerMethodField()
 
     def get_download_url(self, obj):
-        if obj.file:
-            return obj.file.url
+        request = self.context.get('request')
+        if hasattr(obj, 'report_file') and obj.report_file and hasattr(obj.report_file, 'url'):
+            return request.build_absolute_uri(obj.report_file.url)
         return None

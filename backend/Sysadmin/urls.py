@@ -27,6 +27,8 @@ from Sysadmin.views.report_view import SystemReportsView
 from Sysadmin.views.activity_view import SystemActivityLogAPIView
 from Sysadmin.views.facility_admin_auth import facility_admin_login
 from Sysadmin.views.facility_admin_auth import facility_admin_change_password 
+from Sysadmin.views.report_download_view import ReportDownloadView
+from Sysadmin.views.report_export_view import SystemReportExportView
 
 app_name = "Sysadmin"
 
@@ -55,8 +57,10 @@ urlpatterns = [
 
     # System Admin APIs
     path("users/", UserListsView.as_view(), name="user-list"),
-    path("system-reports/", SystemReportsView.as_view(), name="system-report-list"),
+    path('system-reports/', SystemReportsView.as_view(), name="system-report-list"),
     path("system-activity-logs/", SystemActivityLogAPIView.as_view(), name="system-activity-log-list"),
+    path('system-reports/<int:report_id>/download/', ReportDownloadView.as_view(), name='report-download'),
+    path('system-reports/export/', SystemReportExportView.as_view(), name='report-export'),
 ]
 
 

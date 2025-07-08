@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Form, Card, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from '../../services/api';
 
 const SystemAdminLogin = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const SystemAdminLogin = () => {
   const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    const response = await axios.post("http://127.0.0.1:8000/api/token/", {
+    const response = await api.post('/api/token/', {
       username,
       password,
     });

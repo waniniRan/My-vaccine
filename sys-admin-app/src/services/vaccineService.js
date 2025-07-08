@@ -1,29 +1,37 @@
-import axios from "axios";
+import api, { extractData } from './api';
 
-const API_BASE = "http://127.0.0.1:8000/api/sysadmin";
+export async function getVaccines() {
+  try {
+    const response = await api.get('/api/sysadmin/vaccines/');
+    return extractData(response);
+  } catch (err) {
+    throw err.response?.data?.message || 'Failed to fetch vaccines.';
+  }
+}
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+export const createVaccine = async (data) => {
+  try {
+    const res = await api.post('/api/sysadmin/create-vaccine/', data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const getVaccines = () =>
-  axios.get(`${API_BASE}/list-vaccines/`, { headers: getAuthHeaders() });
+export const updateVaccine = async (id, data) => {
+  try {
+    const res = await api.put(`/api/sysadmin/update-vaccine/${id}/`, data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
-const createVaccine = (data) =>
-  axios.post(`${API_BASE}/create-vaccine/`, data, { headers: getAuthHeaders() });
-
-const updateVaccine = (v_ID, data) =>
-  axios.put(`${API_BASE}/update-vaccine/${v_ID}/`, data, { headers: getAuthHeaders() });
-
-const deleteVaccine = (v_ID) =>
-  axios.delete(`${API_BASE}/delete-vaccine/${v_ID}/`, { headers: getAuthHeaders() });
-
-export default {
-  getVaccines,
-  createVaccine,
-  updateVaccine,
-  deleteVaccine,
+export const deleteVaccine = async (id) => {
+  try {
+    const res = await api.delete(`/api/sysadmin/delete-vaccine/${id}/`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
 };

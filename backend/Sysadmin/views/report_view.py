@@ -1,21 +1,21 @@
 # backend/Sysadmin/views/report_api.py
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
 from django.conf import settings
 from rest_framework import status
 from Sysadmin.models.SystemReport import SystemReport
 from api.myserializers.report_serializer import SystemReportListSerializer
+from Sysadmin.views.permissions import IsSystemAdmin
+from rest_framework.permissions import IsAuthenticated
 
 class SystemReportsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [ IsAuthenticated, IsSystemAdmin]
 
     def get(self, request):
         reports = SystemReport.objects.all()
-        serializer = SystemReportListSerializer(reports, many=True)
-        return Response({"message": "Reports loaded successfully",
-            "data": serializer.data,
-            "status": status.HTTP_200_OK
-        }, status=status.HTTP_200_OK)
+        if not reports.exists():
+            return Response({'data': []}, status=200)
+        serializer = SystemReportListSerializer(reports, many=True, context={'request': request})
+        return Response({'data': serializer.data}, status=200)
 
         

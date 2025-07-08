@@ -1,30 +1,37 @@
-import axios from "axios";
+import api, { extractData } from './api';
 
-const API_BASE = "http://127.0.0.1:8000/api/sysadmin";
+export async function getFacilityAdmins() {
+  try {
+    const response = await api.get('/api/sysadmin/facility-admins/');
+    return extractData(response);
+  } catch (err) {
+    throw err.response?.data?.message || 'Failed to fetch facility admins.';
+  }
+}
 
-// Create a function to dynamically get token each time
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+export const createFacilityAdmin = async (data) => {
+  try {
+    const res = await api.post('/api/sysadmin/create-facility-admin/', data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const getFacilityAdmins = () =>
-  axios.get(`${API_BASE}/list-facility-admins/`, { headers: getAuthHeaders() });
+export const updateFacilityAdmin = async (id, data) => {
+  try {
+    const res = await api.put(`/api/sysadmin/update-facility-admin/${id}/`, data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
-const createFacilityAdmin = (data) =>
-  axios.post(`${API_BASE}/create-facility-admin/`, data, { headers: getAuthHeaders() });
-
-const updateFacilityAdmin = (admin_id, data) =>
-  axios.put(`${API_BASE}/update-facility-admin/${admin_id}/`, data, { headers: getAuthHeaders() });
-
-const deleteFacilityAdmin = (admin_id) =>
-  axios.delete(`${API_BASE}/delete-facility-admin/${admin_id}/`, { headers: getAuthHeaders() });
-
-export default {
-  getFacilityAdmins,
-  createFacilityAdmin,
-  updateFacilityAdmin,
-  deleteFacilityAdmin,
+export const deleteFacilityAdmin = async (id) => {
+  try {
+    const res = await api.delete(`/api/sysadmin/delete-facility-admin/${id}/`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
 };

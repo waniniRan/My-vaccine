@@ -1,20 +1,30 @@
 // services/reportService.js
 
-const API_BASE = "/api/system-reports/";
+import api from './api';
 
-const getSystemReports = async () => {
-  const res = await fetch(API_BASE, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      "Content-Type": "application/json",
-    },
-  });
-  if (!res.ok) {
-    throw new Error("Failed to fetch reports");
+export const getSystemReports = async () => {
+  try {
+    const res = await api.get('/api/sysadmin/system-reports/');
+    return res.data && res.data.data ? res.data.data : res.data;
+  } catch (error) {
+    throw error;
   }
-  return res.json();
 };
 
-export default {
-  getSystemReports,
+export const exportSystemReport = async () => {
+  try {
+    const res = await api.get('/api/sysadmin/export-system-reports/', { responseType: 'blob' });
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const downloadReport = async (reportId) => {
+  try {
+    const res = await api.get(`/api/sysadmin/download-report/${reportId}/`, { responseType: 'blob' });
+    return res;
+  } catch (error) {
+    throw error;
+  }
 };

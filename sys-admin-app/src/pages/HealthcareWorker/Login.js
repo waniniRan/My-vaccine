@@ -1,39 +1,89 @@
-import React from "react";
-import { Card, Button, Form } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import healthcareWorkerService from '../../services/healthcareWorkerService';
 
 const HealthcareWorkerLogin = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: hook up real login logic
-    navigate("/healthcare-worker/dashboard");
+    setLoading(true);
+    setError(null);
+
+    if (!formData.username || !formData.password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await healthcareWorkerService.login(formData);
+      const { access, refresh } = response;
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      localStorage.setItem('userRole', 'healthcareworker');
+      navigate('/healthcare-worker/dashboard');
+    } catch (err) {
+      setError(err || 'Login failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <Card style={{ width: "400px", padding: "20px" }}>
-        <h3 className="text-center mb-4">Healthcare Worker Login</h3>
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Username</Form.Label>
-            <Form.Control type="text" placeholder="Enter your username" required />
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Password</Form.Label>
-            <Form.Control type="password" placeholder="Enter your password" required />
-          </Form.Group>
-          <Button type="submit" className="w-100 mt-2" variant="primary">
-            Login
-          </Button>
-        </Form>
-        <div className="text-center mt-3">
-          <a href="#">Forgot password?</a>
-        </div>
-      </Card>
+    <div className="container mt-5" style={{ maxWidth: 400 }}>
+      <div className="card p-4 shadow">
+        <h2 className="mb-4 text-center">Healthcare Worker Login</h2>
+        {error && <div className="alert alert-danger">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <label htmlFor="username" className="form-label">Username</label>
+            <input
+              type="text"
+              className="form-control"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              type="password"
+              className="form-control"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+            disabled={loading}
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default HealthcareWorkerLogin;
+export default HealthcareWorkerLogin; 

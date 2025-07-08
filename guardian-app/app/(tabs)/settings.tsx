@@ -1,85 +1,114 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
-import { mockGuardian, mockChildren } from '@/services/mockData';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { useAuth } from '../AuthContext';
+import guardianService from '../../services/guardianService';
 
-export default function SettingsScreen() {
+const SettingsTab = () => {
+  const { user, logout, refreshProfile } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changing, setChanging] = useState(false);
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await guardianService.getProfile();
+        setProfile(data);
+      } catch (err: any) {
+        setError(err.detail || 'Failed to load profile');
+      }
+      setLoading(false);
+    };
+    fetchProfile();
+  }, [refreshProfile]);
+
+  const handleChangePassword = async () => {
+    setSuccess('');
+    setError('');
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setError('Please fill all password fields.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('New passwords do not match.');
+      return;
+    }
+    setChanging(true);
+    try {
+      await guardianService.changePassword({ old_password: oldPassword, new_password: newPassword });
+      setSuccess('Password changed successfully.');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setError(err.detail || 'Password change failed');
+    }
+    setChanging(false);
+  };
+
+  if (loading) {
+    return <ActivityIndicator style={{ flex: 1 }} />;
+  }
+
+  if (error) {
+    return <View style={styles.center}><Text style={styles.error}>{error}</Text></View>;
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView style={styles.container}>
-        {/* Profile Card */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Parent Profile</Text>
-          <View style={styles.itemRow}>
-            <Ionicons name="person-outline" size={18} color="#2a5ca4" style={styles.icon} />
-            <Text style={styles.itemText}>{mockGuardian.fullname}</Text>
-          </View>
-          <View style={styles.itemRow}>
-            <Ionicons name="card-outline" size={18} color="#2a5ca4" style={styles.icon} />
-            <Text style={styles.itemText}>{mockGuardian.national_id}</Text>
-          </View>
-          <View style={styles.itemRow}>
-            <Ionicons name="mail-outline" size={18} color="#2a5ca4" style={styles.icon} />
-            <Text style={styles.itemText}>{mockGuardian.email}</Text>
-          </View>
-          <View style={styles.itemRow}>
-            <Ionicons name="call-outline" size={18} color="#2a5ca4" style={styles.icon} />
-            <Text style={styles.itemText}>{mockGuardian.phone_number}</Text>
-          </View>
+    <View style={styles.container}>
+      <Text style={styles.title}>Profile</Text>
+      {profile && (
+        <View style={styles.profileBox}>
+          <Text>Full Name: {profile.full_name}</Text>
+          <Text>Email: {profile.email}</Text>
+          <Text>Phone: {profile.phone_number}</Text>
+          <Text>National ID: {profile.national_id}</Text>
         </View>
-
-        {/* Children Section */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Children</Text>
-          {mockChildren.map(child => (
-            <View key={child.child_id} style={styles.itemRow}>
-              <Ionicons name="person-circle-outline" size={18} color="#2a5ca4" style={styles.icon} />
-              <Text style={styles.itemText}>{child.first_name} {child.last_name}</Text>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+      <Text style={styles.title}>Change Password</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Current Password"
+        value={oldPassword}
+        onChangeText={setOldPassword}
+        secureTextEntry
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="New Password"
+        value={newPassword}
+        onChangeText={setNewPassword}
+        secureTextEntry
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Confirm New Password"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+      />
+      {changing ? <ActivityIndicator /> : <Button title="Change Password" onPress={handleChangePassword} />}
+      {success ? <Text style={styles.success}>{success}</Text> : null}
+      <Button title="Logout" color="red" onPress={logout} />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  sectionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 12,
-    marginTop: 12,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3.84,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 12,
-    color: '#222',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  itemText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  icon: {
-    marginRight: 8,
-  },
+  container: { flex: 1, padding: 20 },
+  title: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, marginBottom: 10 },
+  error: { color: 'red', marginBottom: 10, textAlign: 'center' },
+  success: { color: 'green', marginBottom: 10, textAlign: 'center' },
+  profileBox: { marginBottom: 20, padding: 10, backgroundColor: '#f5f5f5', borderRadius: 5 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
+
+export default SettingsTab; 

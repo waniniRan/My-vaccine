@@ -22,6 +22,7 @@ class CreateVaccine(APIView):
     
 #View for updating an existing Vaccine
 class UpdateVaccine(APIView):
+    permission_classes = [IsAuthenticated,IsSystemAdmin]  # Adjust permissions as needed
     def put(self, request, *args, **kwargs):
         v_ID = kwargs.get('v_ID')
         try:
@@ -42,6 +43,7 @@ class UpdateVaccine(APIView):
     
 #View for listing all Vaccines
 class ListVaccine(APIView):
+    permission_classes = [IsAuthenticated,IsSystemAdmin]  # Adjust permissions as needed
     def get(self, request):
         
         vaccines = Vaccine.objects.all()
@@ -51,6 +53,7 @@ class ListVaccine(APIView):
                          "status": status.HTTP_200_OK})
     
 class DeleteVaccine(APIView):
+    permission_classes = [IsAuthenticated,IsSystemAdmin]  # Adjust permissions as needed
     def delete(self, request, v_ID, *args, **kwargs):
         try:
             vaccine = Vaccine.objects.get(v_ID=v_ID)

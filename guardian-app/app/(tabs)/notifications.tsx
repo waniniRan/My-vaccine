@@ -1,49 +1,67 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// For now, using mock notifications
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'Vaccine Due',
-    message: 'MMR vaccine due in 5 days for John.',
-    date: '2025-07-10',
-  },
-  {
-    id: 2,
-    type: 'Appointment Reminder',
-    message: 'Routine checkup scheduled for July 15th.',
-    date: '2025-07-05',
-  },
-];
+import { guardianService } from '../../services/guardianService';
+import { useAuth } from '../AuthContext';
 
-export default function NotificationsScreen() {
- return (
-  <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-    <ScrollView style={styles.container}>
-      <Text style={styles.headerTitle}>Notifications</Text>
-      {mockNotifications.map((notif) => (
-        <View key={notif.id} style={styles.notificationCard}>
-          <View style={styles.cardHeader}>
-            <Ionicons
-              name="notifications-outline"
-              size={20}
-              color="#2a5ca4"
-              style={{ marginRight: 6 }}
-            />
-            <Text style={styles.notifType}>{notif.type}</Text>
+const NotificationsTab = () => {
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await guardianService.getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      setError('Failed to load notifications.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchNotifications();
+    setRefreshing(false);
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView style={styles.container}>
+        <Text style={styles.headerTitle}>Notifications</Text>
+        {notifications.map((notif) => (
+          <View key={notif.id} style={styles.notificationCard}>
+            <View style={styles.cardHeader}>
+              <Ionicons
+                name="notifications-outline"
+                size={20}
+                color="#2a5ca4"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.notifType}>{notif.type}</Text>
+            </View>
+            <Text style={styles.notifMessage}>{notif.message}</Text>
+            <Text style={styles.notifDate}>
+              {new Date(notif.date).toLocaleDateString()}
+            </Text>
           </View>
-          <Text style={styles.notifMessage}>{notif.message}</Text>
-          <Text style={styles.notifDate}>
-            {new Date(notif.date).toLocaleDateString()}
-          </Text>
-        </View>
-      ))}
-    </ScrollView>
-  </SafeAreaView>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
-}
+};
+
+export default NotificationsTab;
 
 const styles = StyleSheet.create({
   container: {

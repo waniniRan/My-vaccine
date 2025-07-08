@@ -1,26 +1,19 @@
-const getAllUsers = async () => {
-  const res = await fetch("/api/users/", {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      "Content-Type": "application/json",
-    },
-  });
+import api from './api';
 
-  if (!res.ok) {
-    // optionally you can parse the error if your Django sends JSON errors
-    let errorText = "Failed to fetch users";
-    try {
-      const errorData = await res.json();
-      if (errorData.detail) errorText = errorData.detail;
-    } catch (e) {
-      // swallow JSON parse errors
-    }
-    throw new Error(errorText);
+export const getAllUsers = async () => {
+  try {
+    const res = await api.get('/api/sysadmin/users/');
+    return res.data && res.data.data ? res.data.data : res.data;
+  } catch (error) {
+    throw error;
   }
-
-  return res.json();
 };
 
-export default {
-  getAllUsers,
+export const exportUsers = async () => {
+  try {
+    const res = await api.get('/api/sysadmin/export-users/', { responseType: 'blob' });
+    return res;
+  } catch (error) {
+    throw error;
+  }
 };

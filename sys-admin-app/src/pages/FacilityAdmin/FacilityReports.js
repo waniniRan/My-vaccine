@@ -16,7 +16,7 @@ import {
   Download,
 } from "react-bootstrap-icons";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from '../../services/api';
 
 const FacilityReportsPage = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -35,17 +35,13 @@ const FacilityReportsPage = () => {
 
   const fetchReports = async () => {
     setLoading(true);
+    setError('');
     try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.get(
-        "http://127.0.0.1:8000/api/facilityadmin/list-facility-reports/",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setReports(res.data);
-      setLoading(false);
+      const res = await api.get('/api/facilityadmin/list-facility-reports/');
+      setReports(res.data && res.data.data ? res.data.data : res.data);
     } catch (err) {
-      console.error(err);
-      setError("Failed to load reports.");
+      setError(err.toString());
+    } finally {
       setLoading(false);
     }
   };

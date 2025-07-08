@@ -1,29 +1,37 @@
-import axios from "axios";
+import api, { extractData } from './api';
 
-const API_BASE = "http://127.0.0.1:8000/api/sysadmin";
+export async function getFacilities() {
+  try {
+    const response = await api.get('/api/sysadmin/list-facilities/');
+    return response;
+  } catch (err) {
+    throw err.response?.data?.message || 'Failed to fetch facilities.';
+  }
+}
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-  return {
-    Authorization: `Bearer ${token}`,
-  };
+export const createFacility = async (data) => {
+  try {
+    const res = await api.post('/api/sysadmin/create-facility/', data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-const getFacilities = () =>
-  axios.get(`${API_BASE}/list-facilities/`, { headers: getAuthHeaders() });
+export const updateFacility = async (id, data) => {
+  try {
+    const res = await api.put(`/api/sysadmin/update-facility/${id}/`, data);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
-const createFacility = (data) =>
-  axios.post(`${API_BASE}/create-facility/`, data, { headers: getAuthHeaders() });
-
-const updateFacility = (id, data) =>
-  axios.put(`${API_BASE}/update-facility/${id}/`, data, { headers: getAuthHeaders() });
-
-const deleteFacility = (id) =>
-  axios.delete(`${API_BASE}/delete-facility/${id}/`, { headers: getAuthHeaders() });
-
-export default {
-  getFacilities,
-  createFacility,
-  updateFacility,
-  deleteFacility,
+export const deleteFacility = async (id) => {
+  try {
+    const res = await api.delete(`/api/sysadmin/delete-facility/${id}/`);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
 };

@@ -20,7 +20,12 @@ import {
   PencilSquare,
   Trash,
 } from "react-bootstrap-icons";
-import vaccineService from "../../services/vaccineService";
+import {
+  getVaccines,
+  createVaccine,
+  updateVaccine,
+  deleteVaccine
+} from "../../services/vaccineService";
 
 const VaccinesPage = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -42,7 +47,7 @@ const VaccinesPage = () => {
 
   const loadVaccines = async () => {
     try {
-      const res = await vaccineService.getVaccines();
+      const res = await getVaccines();
       setVaccines(res.data.data);
     } catch (err) {
       console.error(err);
@@ -57,7 +62,7 @@ const VaccinesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await vaccineService.createVaccine(form);
+      await createVaccine(form);
       setSuccess("Vaccine created successfully");
       setShowModal(false);
       setForm({
@@ -91,7 +96,7 @@ const VaccinesPage = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await vaccineService.updateVaccine(editingVaccine.v_ID, {
+      await updateVaccine(editingVaccine.v_ID, {
         description: form.description,
         dosage: form.dosage,
       });
@@ -107,7 +112,7 @@ const VaccinesPage = () => {
   const handleDelete = async (v_ID) => {
     if (!window.confirm("Are you sure you want to delete this vaccine?")) return;
     try {
-      await vaccineService.deleteVaccine(v_ID);
+      await deleteVaccine(v_ID);
       setSuccess("Vaccine deleted successfully");
       loadVaccines();
     } catch (err) {
@@ -124,27 +129,13 @@ const VaccinesPage = () => {
         </Offcanvas.Header>
         <Offcanvas.Body>
           <ListGroup variant="flush">
-            <ListGroup.Item action href="/system-admin/dashboard">
-              <House /> Home
-            </ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/facilities">
-              <Building /> Facilities
-            </ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/facility-admins">
-              <People /> Facility Admins
-            </ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/vaccines">
-              <PlusSquare /> Vaccines
-            </ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/reports">
-              <FileText /> System Reports
-            </ListGroup.Item>
-            <ListGroup.Item action href="/system-admin/all-users">
-              <List /> All Users
-            </ListGroup.Item>
-            <ListGroup.Item action href="/">
-              <BoxArrowRight /> Logout
-            </ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/dashboard"><House /> Home</ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/facilities"><Building /> Facilities</ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/facility-admins"><People /> Facility Admins</ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/vaccines"><PlusSquare /> Vaccines</ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/reports"><FileText /> System Reports</ListGroup.Item>
+            <ListGroup.Item action href="/system-admin/all-users"><List /> All Users</ListGroup.Item>
+            <ListGroup.Item action href="/"><BoxArrowRight /> Logout</ListGroup.Item>
           </ListGroup>
         </Offcanvas.Body>
       </Offcanvas>
@@ -209,11 +200,9 @@ const VaccinesPage = () => {
         </Table>
       </Container>
 
-      {/* create modal */}
+      {/* Create Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Vaccine</Modal.Title>
-        </Modal.Header>
+        <Modal.Header closeButton><Modal.Title>Add Vaccine</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
             {["name", "v_ID", "description", "dosage", "diseasePrevented", "recommended_age"].map((field) => (
@@ -231,11 +220,9 @@ const VaccinesPage = () => {
         </Modal.Body>
       </Modal>
 
-      {/* edit modal */}
+      {/* Edit Modal */}
       <Modal show={editModal} onHide={() => setEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Vaccine</Modal.Title>
-        </Modal.Header>
+        <Modal.Header closeButton><Modal.Title>Edit Vaccine</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleUpdate}>
             <Form.Group className="mb-2">

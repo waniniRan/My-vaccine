@@ -17,15 +17,11 @@ export interface Child {
 }
 
 export interface VaccinationRecord {
-  recordID: string;
-  child_id: string;
-  v_ID: string;
-  administrationDate: string;
-  doseNumber: number;
-  remarks?: string;
+  id: string;
+  vaccine_name: string;
+  date_administered: string;
   administered_by: string;
-  side_effects?: string;
-  vaccine_name?: string; // For display purposes
+  [key: string]: any;
 }
 
 export interface GrowthRecord {
@@ -45,6 +41,27 @@ export interface Notification {
   is_sent: boolean;
   date_sent?: string;
   date_created: string;
+}
+
+export interface NotificationData {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  [key: string]: any;
+}
+
+export interface CalendarMarkedDates {
+  [date: string]: {
+    marked: boolean;
+    dotColor?: string;
+  };
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status?: string | number;
 }
 
 export interface Guardian {

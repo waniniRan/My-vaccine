@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
 
 load_dotenv()
@@ -190,10 +191,20 @@ REST_FRAMEWORK = {
 
 # CORS settings (if needed for frontend)
 CORS_ALLOWED_ORIGINS = [
-   "http://localhost:3000",  # React default
-   "http://127.0.0.1:3000",
-   # "http://localhost:8080",  # Vue default
-    # Add your frontend URLs here
+    os.getenv('FRONTEND_URL', 'http://localhost:3000'),
+    os.getenv('FRONTEND_URL_2', 'http://127.0.0.1:3000'),
+    os.getenv('FRONTEND_URL_3', 'http://localhost:5173'),
+    os.getenv('FRONTEND_URL_4', 'http://127.0.0.1:5173'),
+]
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'authorization',
+    'content-type',
+    'x-csrftoken',
+    'accept',
+    'origin',
+    'user-agent',
+    'x-requested-with',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -226,14 +237,5 @@ LOGGING = {
     },
 }
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

@@ -26,7 +26,7 @@ class CreateHealthFacility(APIView):
    
 # View for updating an existing Health Facility
 class UpdateHealthFacility(APIView):
-   
+   permission_classes= [IsAuthenticated, IsSystemAdminOrOwner]  # Adjust permissions as needed
    def put(self, request, *args, **kwargs):
       ID= kwargs.get('ID')
       try:
@@ -47,15 +47,17 @@ class UpdateHealthFacility(APIView):
    
 # View for listing all Health Facilities
 class ListHealthFacility(APIView):
+   permission_classes = [IsAuthenticated, CanManageFacilities]  # Adjust permissions as needed
    def get(self, request):
       facilities = HealthFacility.objects.all()
+      if not facilities.exists():
+         return Response({'data': []}, status=200)
       serializer = ListHealthFacilitySerializer(facilities, many=True)
-
-      return Response({"message": "Health Facility List Retrieved Successfully", "data": serializer.data,
-                       "status": status.HTTP_200_OK})
+      return Response({'data': serializer.data}, status=200)
 
 # View for deleting a facility
 class DeleteHealthFacility(APIView):
+    permission_classes = [IsAuthenticated, IsSystemAdmin]  # Adjust permissions as needed
     def delete(self, request, ID, *args, **kwargs):
         try:
             facility = HealthFacility.objects.get(ID=ID)

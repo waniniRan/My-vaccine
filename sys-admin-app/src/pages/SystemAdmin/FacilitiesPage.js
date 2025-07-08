@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Container, Table, Button, Modal, Form, Offcanvas, ListGroup, Alert } from "react-bootstrap";
 import { House, People, PlusSquare, FileText, List, Building, BoxArrowRight } from "react-bootstrap-icons";
-import facilityService from "../../services/facilityService";
+import {
+  getFacilities,
+  createFacility,
+  updateFacility,
+  deleteFacility
+} from "../../services/facilityService";
 
 const FacilitiesPage = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -23,15 +28,13 @@ const FacilitiesPage = () => {
     email: "",
   });
 
-  // load facilities
   useEffect(() => {
-    facilityService
-      .getFacilities()
+    getFacilities()
       .then((res) => {
-        setFacilities(res.data.data);
+        setFacilities(Array.isArray(res.data.data) ? res.data.data : []);
       })
       .catch((err) => {
-        console.error(err);
+        setFacilities([]);
         setError("Failed to load facilities.");
       });
   }, []);
@@ -40,15 +43,14 @@ const FacilitiesPage = () => {
     e.preventDefault();
     try {
       if (editing) {
-        await facilityService.updateFacility(editId, form);
+        await updateFacility(editId, form);
         setSuccess("Facility updated successfully!");
       } else {
-        await facilityService.createFacility(form);
+        await createFacility(form);
         setSuccess("Facility created successfully!");
       }
 
-      // refresh facilities
-      const response = await facilityService.getFacilities();
+      const response = await getFacilities();
       setFacilities(response.data.data);
 
       setShowModal(false);
@@ -83,9 +85,9 @@ const FacilitiesPage = () => {
     const confirmDelete = window.confirm("Are you sure you want to delete this facility?");
     if (!confirmDelete) return;
     try {
-      await facilityService.deleteFacility(id);
+      await deleteFacility(id);
       setSuccess("Facility deleted successfully.");
-      const response = await facilityService.getFacilities();
+      const response = await getFacilities();
       setFacilities(response.data.data);
     } catch (err) {
       console.error(err);
@@ -96,9 +98,7 @@ const FacilitiesPage = () => {
   return (
     <>
       <Offcanvas show={showMenu} onHide={handleCloseMenu}>
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title>Menu</Offcanvas.Title>
-        </Offcanvas.Header>
+        <Offcanvas.Header closeButton><Offcanvas.Title>Menu</Offcanvas.Title></Offcanvas.Header>
         <Offcanvas.Body>
           <ListGroup variant="flush">
             <ListGroup.Item action href="/system-admin/dashboard"><House /> Home</ListGroup.Item>
@@ -112,7 +112,6 @@ const FacilitiesPage = () => {
         </Offcanvas.Body>
       </Offcanvas>
 
-      {/* header */}
       <div className="bg-primary text-white p-3 d-flex justify-content-between align-items-center">
         <h3 className="mb-0">Manage Facilities</h3>
         <Button variant="light" onClick={handleShowMenu}>
@@ -126,7 +125,7 @@ const FacilitiesPage = () => {
 
         <div className="d-flex justify-content-between mb-3">
           <h4>Facilities List</h4>
-          <Button onClick={() => {setShowModal(true); setEditing(false);}}>Add Facility</Button>
+          <Button onClick={() => { setShowModal(true); setEditing(false); }}>Add Facility</Button>
         </div>
 
         <Table bordered hover>
@@ -142,7 +141,7 @@ const FacilitiesPage = () => {
             </tr>
           </thead>
           <tbody>
-            {facilities.map((f) => (
+            {(facilities || []).map((f) => (
               <tr key={f.ID}>
                 <td>{f.ID}</td>
                 <td>{f.name}</td>
@@ -161,25 +160,16 @@ const FacilitiesPage = () => {
       </Container>
 
       <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>{editing ? "Edit Facility" : "Add Facility"}</Modal.Title>
-        </Modal.Header>
+        <Modal.Header closeButton><Modal.Title>{editing ? "Edit Facility" : "Add Facility"}</Modal.Title></Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
             <Form.Group className="mb-2">
               <Form.Label>Facility Name</Form.Label>
-              <Form.Control
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
+              <Form.Control value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Facility Type</Form.Label>
-              <Form.Select
-                value={form.facility_type}
-                onChange={(e) => setForm({ ...form, facility_type: e.target.value })}
-              >
+              <Form.Select value={form.facility_type} onChange={(e) => setForm({ ...form, facility_type: e.target.value })}>
                 <option>HOSPITAL</option>
                 <option>CLINIC</option>
                 <option>HEALTH_CENTER</option>
@@ -187,30 +177,17 @@ const FacilitiesPage = () => {
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Location</Form.Label>
-              <Form.Control
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-                required
-              />
+              <Form.Control value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} required />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Phone</Form.Label>
-              <Form.Control
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
+              <Form.Control value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
+              <Form.Control type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Form.Group>
-            <Button type="submit" variant="primary">
-              {editing ? "Update" : "Save"}
-            </Button>
+            <Button type="submit" variant="primary">{editing ? "Update" : "Save"}</Button>
           </Form>
         </Modal.Body>
       </Modal>

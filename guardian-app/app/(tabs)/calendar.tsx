@@ -1,30 +1,67 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
-import { mockVaccinationRecords } from '@/services/mockData';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { guardianService } from '../../services/guardianService';
+import { useAuth } from '../AuthContext';
 
 export default function CalendarScreen() {
-  // get vaccination dates
-  const markedDates: Record<string, any> = {};
+  const { user } = useAuth();
+  const [children, setChildren] = useState([]);
+  const [selectedChild, setSelectedChild] = useState(null);
+  const [markedDates, setMarkedDates] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  mockVaccinationRecords.forEach(record => {
-    const date = record.administrationDate.split('T')[0]; // yyyy-mm-dd
-    markedDates[date] = {
-      marked: true,
-      dotColor: '#2a5ca4',
-      activeOpacity: 0,
-    };
-  });
+  const fetchChildren = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await guardianService.getChildren();
+      setChildren(data);
+      if (data.length > 0) setSelectedChild(data[0]);
+    } catch (err) {
+      setError('Failed to load children.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // hardcode upcoming vaccines too for now
-  markedDates['2025-01-15'] = {
-    marked: true,
-    dotColor: 'orange',
-  };
-  markedDates['2025-02-20'] = {
-    marked: true,
-    dotColor: 'orange',
+  const fetchVaccinationRecords = useCallback(async (childId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const records = await guardianService.getChildVaccinationRecords(childId);
+      const dates = {};
+      records.forEach((rec) => {
+        if (rec.date_administered) {
+          dates[rec.date_administered] = { marked: true, dotColor: '#00C853' };
+        }
+      });
+      setMarkedDates(dates);
+    } catch (err) {
+      setError('Failed to load vaccination records.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchChildren();
+  }, [fetchChildren]);
+
+  useEffect(() => {
+    if (selectedChild) {
+      fetchVaccinationRecords(selectedChild.id);
+    }
+  }, [selectedChild, fetchVaccinationRecords]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchChildren();
+    if (selectedChild) await fetchVaccinationRecords(selectedChild.id);
+    setRefreshing(false);
   };
 
   return (

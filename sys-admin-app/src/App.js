@@ -1,7 +1,7 @@
 //import logo from './logo.svg';
 import './App.css';
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 //System Admin Pages
 import SystemAdminLogin from "./pages/SystemAdmin/Login";
@@ -27,8 +27,9 @@ import GuardianPage from "./pages/HealthcareWorker/GuardianPage";
 import ChildPage from "./pages/HealthcareWorker/ChildPage";
 import VaccinationRecordsPage from "./pages/HealthcareWorker/VaccinationRecordsPage";
 import GrowthRecordsPage from "./pages/HealthcareWorker/GrowthRecordsPage";
-import NotificationPage from "./pages/HealthcareWorker/NotificationPage";
+import NotificationsPage from './pages/HealthcareWorker/NotificationsPage';
 
+import LoginSelection from "./pages/LoginSelection";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
       <Routes>
         {/* System Admin Routes */}
         <Route path="/" element={<SystemAdminLogin />} />
+        <Route path="/system-admin/login" element={<SystemAdminLogin />} />
         <Route path="/system-admin/dashboard" element={<SystemAdminDashboard />} />
         <Route path="/system-admin/facilities" element={<FacilitiesPage />} />
         <Route path="/system-admin/facility-admins" element={<FacilityAdminsPage />} />
@@ -50,17 +52,20 @@ function App() {
         <Route path="/facility-admin/reports" element={<FacilityReportsPage />} />
         <Route path="/facility-admin/change-password" element={<ChangePassword />} />
 
+        {/* Redirect /login to /facility-admin/login */}
+        <Route path="/login" element={<LoginSelection />} />
+        {/* Redirect /system-admin to /system-admin/login */}
+        <Route path="/system-admin" element={<Navigate to="/system-admin/login" />} />
 
-
-        {/*Hea}lthcare Worker Routes */}
+        {/* Healthcare Worker Routes */}
         <Route path="/healthcare-worker/login" element={<HealthcareWorkerLogin />} />
         <Route path="/healthcare-worker/dashboard" element={<HealthcareWorkerDashboard />} />
         <Route path="/healthcare-worker/guardian" element={<GuardianPage />} />
         <Route path="/healthcare-worker/children" element={<ChildPage />} />
         <Route path="/healthcare-worker/vaccination-records" element={<VaccinationRecordsPage />} />
         <Route path="/healthcare-worker/growth-records" element={<GrowthRecordsPage />} />
-        <Route path="/healthcare-worker/notifications" element={<NotificationPage />} />
-        
+        <Route path="/healthcare-worker/notifications" element={<NotificationsPage />} />
+        <Route path="/healthcareworker/notifications" element={<NotificationsPage />} />
 
       </Routes>
     </Router>

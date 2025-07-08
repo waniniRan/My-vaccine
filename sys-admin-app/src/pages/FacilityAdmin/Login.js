@@ -8,23 +8,29 @@ const FacilityAdminLogin = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/sysadmin/facility-admin-login/", {
+      const response = await axios.post('/api/sysadmin/facility-admin-login/', {
         username,
         password,
       });
-      localStorage.setItem("accessToken", res.data.access);
-      localStorage.setItem("refreshToken", res.data.refresh);
-      if (res.data.password_change_required) {
-        navigate("/facility-admin/change-password");
+      const { access, refresh, password_change_required } = response.data;
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      if (password_change_required) {
+        navigate('/facility-admin/change-password');
       } else {
-        navigate("/facility-admin/dashboard");
+        navigate('/facility-admin/dashboard');
       }
     } catch (err) {
-      setError("Invalid username or password");
+      setError(err.response?.data?.message || 'Login failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,7 +39,7 @@ const FacilityAdminLogin = () => {
       <Card style={{ width: "400px", padding: "20px" }}>
         <h3 className="text-center mb-4">Facility Admin Login</h3>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleLogin}>
           <Form.Group className="mb-3">
             <Form.Label>Username</Form.Label>
             <Form.Control
@@ -54,7 +60,7 @@ const FacilityAdminLogin = () => {
               required
             />
           </Form.Group>
-          <Button variant="primary" type="submit" className="w-100 mt-2">
+          <Button variant="primary" type="submit" className="w-100 mt-2" disabled={loading}>
             Login
           </Button>
         </Form>

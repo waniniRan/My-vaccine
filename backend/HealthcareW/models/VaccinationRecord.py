@@ -17,7 +17,7 @@ class VaccinationRecord(models.Model):
     administrationDate = models.DateTimeField(auto_now_add=True)  # Use timezone.now for current date and time
     doseNumber= models.IntegerField()
     remarks= models.TextField(blank=True)
-    administered_by = models.ForeignKey('Facilityadmin.HealthcareW', on_delete=models.CASCADE)
+    administered_by = models.ForeignKey('Facilityadmin.HealthcareW', on_delete=models.CASCADE, null=True, blank=True)
     side_effects = models.TextField(blank=True)
     
 

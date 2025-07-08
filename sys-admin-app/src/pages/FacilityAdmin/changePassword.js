@@ -9,29 +9,36 @@ const ChangePassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
-    setError("");
+    setError(null);
+    setSuccess(null);
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError('New password and confirm password do not match.');
       return;
     }
-
+    setLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      await axios.post(
-        "http://127.0.0.1:8000/api/sysadmin/facility-admin-change-password/",
-        { new_password: newPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setSuccess("Password changed successfully. Please log in again.");
-      setTimeout(() => {
-        navigate("/facility-admin/login");
-      }, 2000);
+      await axios.post('/api/facilityadmin/change-password/', {
+        old_password: oldPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+      setSuccess('Password changed successfully. Please log in again.');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setTimeout(() => navigate('/facility-admin/login'), 1500);
     } catch (err) {
-      console.log(err);
-      setError("Error changing password.");
+      setError(err.response?.data?.message || 'Password change failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,7 +48,16 @@ const ChangePassword = () => {
         <h3 className="text-center mb-4">Set Your New Password</h3>
         {error && <Alert variant="danger">{error}</Alert>}
         {success && <Alert variant="success">{success}</Alert>}
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleChangePassword}>
+          <Form.Group>
+            <Form.Label>Old Password</Form.Label>
+            <Form.Control
+              type="password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              required
+            />
+          </Form.Group>
           <Form.Group>
             <Form.Label>New Password</Form.Label>
             <Form.Control
@@ -60,7 +76,7 @@ const ChangePassword = () => {
               required
             />
           </Form.Group>
-          <Button type="submit" className="w-100 mt-3" variant="primary">
+          <Button type="submit" className="w-100 mt-3" variant="primary" disabled={loading}>
             Change Password
           </Button>
         </Form>
